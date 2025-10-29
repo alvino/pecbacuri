@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2><i class="fas fa-exclamation-triangle"></i> Animais em Alerta de Risco (Vivos)</h2>
+<p>Limites: GPMD mínimo 0.20 kg/dia | Pesagem máxima 60 dias | Custo Acumulado > 20% da média do rebanho ({{ media_custo_rebanho|floatformat:2 }}).</p>
+
+{% if animais_em_risco %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Identificação</th>
+            <th>Lote Atual</th>
+            <th>Métricas Chave</th>
+            <th>Motivos do Risco</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in animais_em_risco %}
+        <tr>
+            <td>
+                <a href="{% url 'animal_detail' item.animal.id %}">{{ item.animal.identificacao }}</a>
+            </td>
+            <td>{{ item.animal.pasto }}</td>
+            <td>
+                GPMD (30d): **{{ item.gpmd_recente|default:"N/A"|floatformat:2 }}** kg/dia <br>
+                Custo Anual: **R$ {{ item.custo_acumulado|floatformat:2 }}**
+            </td>
+            <td>
+                <ul>
+                {% for risco in item.riscos %}
+                    <li class="text-danger">**{{ risco }}**</li>
+                {% endfor %}
+                </ul>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> Parabéns! Nenhum animal vivo em situação de risco crítico.
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Tratamentos | Gestão Nelore{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1 class="mb-4">Registro de Tratamentos de Saúde</h1>
+        <p class="lead">Histórico de vacinas, vermifugações e tratamentos específicos por animal.</p>
+
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary mb-4">← Voltar ao Dashboard</a>
+        <a href="{% url 'admin:ControleRebanho_tratamentosaude_add' %}" class="btn btn-success mb-4">Adicionar Novo Tratamento</a>
+
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Animal</th>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Produto</th>
+                    <th>Dose</th>
+                    <th>Próxima Data</th>
+                    <th>Descrição</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tratamento in tratamentos %}
+                <tr>
+                    <td>{{ tratamento.animal.identificacao }}</td>
+                    <td>{{ tratamento.data_tratamento|date:"d/m/Y" }}</td>
+                    <td>{{ tratamento.get_tipo_tratamento_display }}</td>
+                    <td>{{ tratamento.produto }}</td>
+                    <td>{{ tratamento.dose }}</td>
+                    <td>{% if tratamento.data_proximo_tratamento %}{{ tratamento.data_proximo_tratamento|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    <td>{{ tratamento.descricao|truncatechars:30 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">Nenhum registro de tratamento de saúde encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+   {% endblock %}

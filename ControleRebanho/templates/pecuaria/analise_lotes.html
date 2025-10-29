@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load custom_filters %} 
+{% block title %}Análise de Lotes | Gestão Nelore{% endblock %}
+
+{% block content %}
+    
+    <h1 class="mb-4">Análise de Desempenho por Lote</h1>
+    <p class="lead">Comparação do GPMD médio por lote para avaliar a eficiência de pastagem e manejo.</p>
+
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Lote</th>
+                <th>Finalidade</th>
+                <th>Pasto Atual</th>
+                <th>Total de Animais</th>
+                <th>GPMD Médio (Kg/dia)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dado in dados_lotes %}
+            <tr>
+                <td><strong>{{ dado.lote.nome }}</strong></td>
+                <td>{{ dado.lote.get_finalidade_display }}</td>
+                <td>{{ dado.pasto_atual }}</td>
+                <td>{{ dado.total_animais }}</td>
+                <td>
+                    {% if dado.gpmd_medio != 'N/A' %}
+                        <span class="badge bg-primary fs-6">{{ dado.gpmd_medio }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Sem Pesagens com GPMD</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Nenhum lote configurado ou animais ativos nos lotes.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock content %}

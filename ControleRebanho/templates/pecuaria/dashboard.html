@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Gestão Nelore{% endblock %}
+
+{% block content %}
+   
+    <div class="container mt-4">
+        <h1 class="mb-4">Manejo Nelore</h1>
+        <p class="lead">Bem-vindo ao centro de controle da sua fazenda. Visão geral do rebanho ativo:</p>
+
+        
+        <div class="row row-cols-1 row-cols-md-4 g-4">
+            
+            <div class="col">
+                <div class="card text-white bg-primary mb-3 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Total de Animais</h5>
+                        <p class="card-text fs-2 fw-bold">{{ total_animais }}</p>
+                        <p class="card-text small">Ativos no Rebanho</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="card text-dark bg-info-subtle mb-3 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Fêmeas (Matrizes)</h5>
+                        <p class="card-text fs-2 fw-bold">{{ total_femeas }}</p>
+                        <p class="card-text small">Ativos no Rebanho</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="card text-dark bg-secondary-subtle mb-3 text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Machos (Touros/Garrotes)</h5>
+                        <p class="card-text fs-2 fw-bold">{{ total_machos }}</p>
+                        <p class="card-text small">Ativos no Rebanho</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="card text-white bg-danger mb-3 text-center border-3 border-danger">
+                    <div class="card-body">
+                        <h5 class="card-title">🚨 Alerta Genealogia</h5>
+                        <p class="card-text fs-2 fw-bold">{{ alerta_genealogia }}</p>
+                        <p class="card-text small">Animais sem Mãe Registrada</p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+    <hr class="my-5">
+
+    <div class="mb-5">
+        <h4>Bezerros em Idade de Desmame ({{ alerta_desmame|length }})</h4>
+        {% if alerta_desmame %}
+        <table class="table table-striped">
+            <thead>
+                <tr class="table-info">
+                    <th>Animal</th>
+                    <th>Idade (Meses)</th>
+                    <th>Nascimento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for animal in alerta_desmame %}
+                <tr>
+                    <td><a href="{% url 'admin:ControleRebanho_animal_change' animal.identificacao.pk %}">{{ animal.identificacao }}</a></td>
+                    <td>{{ animal.idade_meses }}</td>
+                    <td>{{ animal.data_nascimento|date:"d/m/Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="alert alert-secondary">Nenhum bezerro na faixa ideal de desmame (6 a 8 meses) no momento.</p>
+        {% endif %}
+        </div>
+       
+        <div class="row g-4 mt-4">
+        
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-light">
+                        Status Reprodutivo (DG)
+                    </div>
+                    <div class="card-body">
+                        <canvas id="graficoStatusReprodutivo"></canvas>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-light">
+                        Distribuição Geral (Ativos vs. Saídas)
+                    </div>
+                    <div class="card-body">
+                        <canvas id="graficoDistribuicaoRebanho"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+   
+     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    
+    <script>
+        // 1. GRÁFICO DE STATUS REPRODUTIVO (Tipo Rosquinha/Donut)
+        const ctxReprodutivo = document.getElementById('graficoStatusReprodutivo');
+        new Chart(ctxReprodutivo, {
+            type: 'doughnut',
+            data: {
+                labels: ['Prenhes', 'Vazias', 'Aguardando DG'],
+                datasets: [{
+                    label: 'Matrizes',
+                    data: [{{ total_prenhes }}, {{ total_vazias }}, {{ total_aguardando }}],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)', // Verde
+                        'rgba(220, 53, 69, 0.8)',  // Vermelho
+                        'rgba(255, 193, 7, 0.8)'   // Amarelo
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // 2. GRÁFICO DE DISTRIBUIÇÃO DO REBANHO (Tipo Barra Simples)
+        const ctxDistribuicao = document.getElementById('graficoDistribuicaoRebanho');
+        new Chart(ctxDistribuicao, {
+            type: 'bar',
+            data: {
+                labels: ['Ativos', 'Vendidos', 'Abatidos'],
+                datasets: [{
+                    label: 'Total de Animais',
+                    data: [{{ total_animais }}, {{ total_vendido }}, {{ total_abatido }}],
+                    backgroundColor: [
+                        'rgba(0, 123, 255, 0.8)',  // Azul para Ativo
+                        'rgba(255, 165, 0, 0.8)', // Laranja para Vendido
+                        'rgba(108, 117, 125, 0.8)' // Cinza para Descarte
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    </script>
+    
+
+{% endblock %}

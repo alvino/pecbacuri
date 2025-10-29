@@ -1,0 +1,6 @@
+*.pyc
+
+ControleRebanho/migrations/*
+
+/db copy.sqlite3
+/db.sqlite3

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load humanize %} 
+
+{% block title %}Dashboard Financeiro & Lucratividade{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4"><i class="fas fa-chart-line"></i> Dashboard Financeiro</h1>
+    <p class="lead">Análise da performance financeira e lucratividade dos animais que saíram do rebanho.</p>
+
+    <form method="get" class="row g-3 align-items-end mb-5 bg-light p-3 rounded shadow-sm">
+        <div class="col-md-2">
+            <label for="ano" class="form-label">Filtrar Ano</label>
+            <select class="form-select" id="ano" name="ano" required>
+                {% for ano in anos_disponiveis %}
+                    <option value="{{ ano }}" {% if ano|stringformat:"s" == ano_filtro %}selected{% endif %}>
+                        {{ ano }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </form>
+    
+    <h2 class="mb-4">Resultado Geral em {{ ano_filtro }}</h2>
+    <div class="row g-4 mb-5">
+        
+        <div class="col-lg-4">
+            <div class="card h-100 border-danger">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Custos Totais (R$)</h6>
+                    <h5 class="card-title fs-3 fw-bold">R$ {{ custos_totais|floatformat:2|intcomma }}</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card h-100 border-success">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Receitas Totais (R$)</h6>
+                    <h5 class="card-title fs-3 fw-bold">R$ {{ receitas_totais|floatformat:2|intcomma }}</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+    
+            <div class="card h-100 
+                {% if lucro_geral >= 0 %}border-success{% else %}border-danger{% endif %}
+            ">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Lucro / Prejuízo Geral (R$)</h6>
+                    <h5 class="card-title fs-3 fw-bold 
+                        {% if lucro_geral >= 0 %}text-success{% else %}text-danger{% endif %}
+                    ">
+                        <i class="
+                            {% if lucro_geral >= 0 %}fas fa-arrow-up{% else %}fas fa-arrow-down{% endif %}
+                        me-2"></i> R$ {{ lucro_geral|floatformat:2|intcomma }}
+                    </h5>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <h2 class="mt-5 mb-3">Lucratividade por Animal (Saídos)</h2>
+    
+    {% if detalhe_lucratividade %}
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Animal</th>
+                    <th>Data de Saída</th>
+                    <th>Destino (Venda, Abate ou Baixa)</th> {# Refinamento no cabeçalho #}
+                    <th class="text-end">Custo Acumulado (R$)</th>
+                    <th class="text-end">Receita (R$)</th>
+                    <th class="text-end">Lucro/Prejuízo (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in detalhe_lucratividade %}
+                <tr>
+                    <td><a href="{{ item.link }}" class="fw-bold">{{ item.identificacao }}</a></td>
+                    <td>{{ item.data_saida|date:"d/m/Y" }}</td>
+                    <td>{{ item.destino }}</td>
+                    <td class="text-end text-danger">R$ {{ item.custo_acumulado|floatformat:2|intcomma }}</td>
+                    
+                    {# Receita será R$ 0.00 para animais 'MORTO' #}
+                    <td class="text-end text-success">R$ {{ item.receita_animal|floatformat:2|intcomma }}</td>
+                    
+                    {# O prejuízo será formatado como vermelho e negrito #}
+                    {% if item.lucro >= 0 %}
+                        <td class="text-end fw-bold text-success">R$ {{ item.lucro|floatformat:2|intcomma }}</td>
+                    {% else %}
+                        <td class="text-end fw-bold text-danger">R$ {{ item.lucro|floatformat:2|intcomma }}</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info">
+            Nenhum animal vendido, abatido ou com baixa foi registrado no ano de {{ ano_filtro }}.
+        </div>
+    {% endif %}
+
+{% endblock content %}

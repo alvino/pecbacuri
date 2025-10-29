@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% load humanize custom_filters %}
+{# custom_filters (mul, sub) são importantes para cálculos se você os usa em outros lugares #}
+
+{% block title %}Detalhes do Animal: {{ animal.identificacao }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">
+        {{ animal.identificacao }} 
+        <small class="text-muted fs-5">| {{ animal.nome|default:"(Sem Nome)" }}</small>
+        {% if animal.situacao == 'vendido' %}
+            <span class="badge bg-secondary">VENDIDO</span>
+        {% elif animal.situacao == 'morto' %}
+            <span class="badge bg-dark">MORTO</span>
+        {% else %}
+            <span class="badge bg-success">{{ animal.get_situacao_display }}</span>
+        {% endif %}
+    </h1>
+
+    <div class="row g-3 mb-5">
+        
+        <div class="col-md-3">
+            <div class="card h-100 border-info">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Idade</h6>
+                    <h5 class="card-title">{{ idade_anos }} anos e {{ idade_meses }} meses</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card h-100 border-warning">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Último Peso (Kg)</h6>
+                    <h5 class="card-title">
+                        {% if ultima_pesagem %}{{ ultima_pesagem.peso|floatformat:2 }}{% else %}-{% endif %}
+                    </h5>
+                    <small class="text-muted">{% if ultima_pesagem %}em {{ ultima_pesagem.data_pesagem }}{% endif %}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card h-100 border-primary">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">GPMD Médio (Kg/dia)</h6>
+                    <h5 class="card-title">
+                        {% if gpmd_medio %}{{ gpmd_medio|floatformat:2 }}{% else %}-{% endif %}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card h-100 border-danger">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">CUSTO ACUMULADO</h6>
+                    <h5 class="card-title">R$ {{ custo_acumulado|floatformat:2|intcomma }}</h5>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <ul class="nav nav-tabs" id="animalTabs" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button" role="tab">Geral & Pasto</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="pesagem-tab" data-bs-toggle="tab" data-bs-target="#pesagem-pane" type="button" role="tab">Pesagem</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="saude-tab" data-bs-toggle="tab" data-bs-target="#saude-pane" type="button" role="tab">Saúde</button></li>
+        {% if animal.sexo == 'F' %}<li class="nav-item" role="presentation"><button class="nav-link" id="repro-tab" data-bs-toggle="tab" data-bs-target="#repro-pane" type="button" role="tab">Reprodução</button></li>{% endif %}
+        <li class="nav-item" role="presentation"><button class="nav-link" id="financeiro-tab" data-bs-toggle="tab" data-bs-target="#financeiro-pane" type="button" role="tab">Financeiro</button></li>
+    </ul>
+
+    <div class="tab-content pt-3" id="animalTabsContent">
+        
+        <div class="tab-pane fade show active" id="info-pane" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
+            <h3>Informações Gerais</h3>
+            <p><strong>Pasto Atual:</strong> 
+                {% if animal.pasto_atual %}
+                    <a href="{% url 'pasto_detail' pk=animal.pasto_atual.pk %}">{{ animal.pasto_atual.nome }}</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </p>
+            <p><strong>Genealogia:</strong> 
+                Mãe 
+                {% if animal.mae %}
+                    <a href="{% url 'animal_detail' pk=animal.mae.pk %}">{{ animal.mae.identificacao }}</a>
+                {% else %}
+                    N/A
+                {% endif %}, 
+                Pai 
+                {% if animal.pai %}
+                    <a href="{% url 'animal_detail' pk=animal.pai.pk %}">{{ animal.pai.identificacao }}</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </p>
+            
+            <hr>
+            
+            <h3>Histórico de Pastagem</h3>
+            <table class="table table-striped table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Pasto de Origem</th>
+                        <th>Pasto de Destino</th>
+                        <th>Entrada</th>
+                        <th>Saída</th>
+                        <th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in movimentacoes_pasto %}
+                    <tr>
+                        <td>{{ mov.pasto_origem|default:"N/A" }}</td>
+                        <td><a href="{% url 'pasto_detail' pk=mov.pasto_destino.pk %}">{{ mov.pasto_destino.nome }}</a></td>
+                        <td>{{ mov.data_entrada }}</td>
+                        <td>{{ mov.data_saida|default:"Atual" }}</td>
+                        <td>{{ mov.motivo|default:"Rodízio padrão" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5">Nenhuma movimentação registrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tab-pane fade" id="pesagem-pane" role="tabpanel" aria-labelledby="pesagem-tab" tabindex="0">
+            <h3>Histórico de Pesagem</h3>
+            <a href="{% url 'admin:ControleRebanho_pesagem_add' %}?animal={{ animal.pk }}" class="btn btn-sm btn-primary mb-3">Registrar Nova Pesagem</a>
+            <table class="table table-striped table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Peso (Kg)</th>
+                        <th>GPMD (Kg/dia)</th>
+                        <th>Observações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pesagem in pesagens %}
+                    <tr>
+                        <td>{{ pesagem.data_pesagem }}</td>
+                        <td>{{ pesagem.peso|floatformat:2 }}</td>
+                        <td>
+                            {% if pesagem.gpmd %}
+                                {{ pesagem.gpmd|floatformat:2 }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ pesagem.observacoes|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4">Nenhuma pesagem registrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="tab-pane fade" id="saude-pane" role="tabpanel" aria-labelledby="saude-tab" tabindex="0">
+            <h3>Histórico de Saúde e Tratamentos</h3>
+             <a href="{% url 'admin:ControleRebanho_tratamentosaude_add' %}?animal={{ animal.pk }}" class="btn btn-sm btn-primary mb-3">Registrar Tratamento</a>
+            <table class="table table-striped table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Medicamento</th>
+                        <th>Custo Estimado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tratamento in tratamentos %}
+                    <tr>
+                        <td>{{ tratamento.data_tratamento }}</td>
+                        <td>{{ tratamento.get_tipo_display }}</td>
+                        <td>{{ tratamento.medicamento }}</td>
+                        <td>R$ {{ tratamento.custo_estimado|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4">Nenhum tratamento de saúde registrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tab-pane fade" id="repro-pane" role="tabpanel" aria-labelledby="repro-tab" tabindex="0">
+            <h3>Histórico Reprodutivo</h3>
+            <a href="{% url 'admin:ControleRebanho_reproducao_add' %}?matriz={{ animal.pk }}" class="btn btn-sm btn-primary mb-3">Registrar Cobertura/IA</a>
+            <table class="table table-striped table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Touro</th>
+                        <th>Resultado</th>
+                        <th>Nascimento Previsto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for repro in reproducoes %}
+                    <tr>
+                        <td>{{ repro.data_cobertura }}</td>
+                        <td>{{ repro.get_tipo_display }}</td>
+                        <td><a href="{% url 'animal_detail' pk=repro.touro.pk %}">{{ repro.touro.identificacao }}</a></td>
+                        <td>{{ repro.get_resultado_display|default:"Em Andamento" }}</td>
+                        <td>{{ repro.data_parto_prevista|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5">Nenhum registro reprodutivo.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tab-pane fade" id="financeiro-pane" role="tabpanel" aria-labelledby="financeiro-tab" tabindex="0">
+            <h3>Custo Acumulado (R$ {{ custo_acumulado|floatformat:2|intcomma }})</h3>
+            <table class="table table-striped table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data do Custo</th>
+                        <th>Categoria</th>
+                        <th>Valor Alocado (R$)</th>
+                        <th>Descrição</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalhe in custos_detalhados %}
+                    <tr>
+                        <td>{{ detalhe.registro_de_custo.data_custo }}</td>
+                        <td>{{ detalhe.registro_de_custo.tipo_custo.nome }}</td>
+                        <td>{{ detalhe.valor_alocado|floatformat:2|intcomma }}</td>
+                        <td>{{ detalhe.registro_de_custo.descricao|truncatechars:50 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4">Nenhum custo alocado diretamente ou via pasto.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock content %}
