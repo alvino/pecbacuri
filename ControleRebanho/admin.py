@@ -174,7 +174,7 @@ class MovimentacaoLoteForm(forms.Form):
 # A C T I O N S
 # ----------------------------------------------------
 
-@admin.action(description='Mover animais para novo Pasto (Lote)')
+@admin.action(description='Mover animais para novo Pasto')
 def movimentar_em_lote(modeladmin, request, queryset):
     # Passo 1: Verifica se é um POST do formulário
     if 'apply' in request.POST:
@@ -308,12 +308,119 @@ class ReproducaoAdmin(admin.ModelAdmin):
     search_fields = ('matriz__identificacao', 'codigo_semen')
     
 
+class MudarPastoLoteForm(forms.Form):
+    pasto_destino = forms.ModelChoiceField(
+        queryset=Pasto.objects.all(),
+        label="Pasto de Destino",
+        required=True
+    )
+    data_entrada = forms.DateField(
+        initial=timezone.localdate(),
+        widget=admin.widgets.AdminDateWidget,
+        label="Data da Entrada no Novo Pasto"
+    )
+    observacoes = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False,
+        label="Observações da Movimentação"
+    )
+
+
+@admin.action(description='Mudar Pasto dos Lotes Selecionados')
+def mudar_pasto_lote(modeladmin, request, queryset_lotes): # O queryset agora é de Lotes
+    
+    if 'apply' in request.POST:
+        form = MudarPastoLoteForm(request.POST)
+        
+        if form.is_valid():
+            pasto_destino = form.cleaned_data['pasto_destino']
+            data_entrada = form.cleaned_data['data_entrada'] 
+            observacoes = form.cleaned_data['observacoes']
+            
+            # --- Lógica de Movimentação Transacional ---
+            try:
+                with transaction.atomic():
+                    total_animais_movimentados = 0
+                    
+                    # 1. Itera sobre os Lotes selecionados
+                    for lote in queryset_lotes:
+
+                        # --- A. ATUALIZAÇÃO DO PRÓPRIO LOTE ---
+                        # Assumimos que o campo no Lote é 'pasto_atual'
+                        lote.pasto_atual = pasto_destino
+                        lote.save(update_fields=['pasto_atual'])
+
+                        # 2. Encontra TODOS os animais NESTES lotes (usando lote_atual)
+                        animais_do_lote = Animal.objects.filter(lote_atual=lote)
+                        
+                        # Se não houver animais, pule para o próximo lote
+                        if not animais_do_lote.exists():
+                            continue
+
+                        # 3. Executa a movimentação para cada animal
+                        for animal in animais_do_lote:
+                            pasto_origem = animal.pasto_atual
+
+                            # Cria o registro de MovimentacaoPasto
+                            MovimentacaoPasto.objects.create(
+                                animal=animal,
+                                pasto_origem=pasto_origem,      
+                                pasto_destino=pasto_destino,  
+                                data_entrada=data_entrada,   
+                                motivo=observacoes
+                            )
+                            
+                            # Atualiza o campo pasto_atual do Animal
+                            animal.pasto_atual = pasto_destino
+                            animal.save(update_fields=['pasto_atual'])
+                            
+                            total_animais_movimentados += 1
+                
+                # Mensagem de sucesso
+                messages.success(
+                    request,
+                    f"{total_animais_movimentados} animal(is) de {queryset_lotes.count()} lote(s) movimentado(s) para o pasto '{pasto_destino.nome}'.",
+                )
+                
+            except Exception as e:
+                messages.error(
+                    request,
+                    f"Erro ao movimentar os lotes: {e}",
+                )
+
+            # Redireciona de volta para a changelist de Lotes
+            return redirect('admin:%s_%s_changelist' % (modeladmin.model._meta.app_label, modeladmin.model._meta.model_name))
+            
+    # Lida com GET (renderização inicial)
+    else:
+        form = MudarPastoLoteForm()
+
+    context = {
+        'opts': modeladmin.model._meta,
+        'queryset_lotes': queryset_lotes, # Passa o queryset de Lotes
+        'action_form': form,
+        'title': f"Mudar Pasto de {queryset_lotes.count()} Lote(s)",
+        'media': modeladmin.media,
+        'action_name': 'mudar_pasto_lote',
+        'action_checkbox_name': admin.helpers.ACTION_CHECKBOX_NAME,
+    }
+
+    # Você precisará criar este template, baseado no anterior!
+    return render(
+        request, 
+        'admin/mudar_pasto_lote_action.html', 
+        context=context
+    )
+
+
 @admin.register(Lote)
 class LoteAdmin(ImportExportModelAdmin):
     resource_class = LoteResource 
     list_display = ('nome', 'finalidade', 'pasto_atual', 'data_entrada', 'contagem_animais')
     list_filter = ('finalidade', 'pasto_atual')
     search_fields = ('nome',)
+
+    actions = [mudar_pasto_lote]
 
     # Calcula a contagem de animais no lote (campo dinâmico para a lista)
     def contagem_animais(self, obj):

@@ -1,14 +1,18 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Q
-from .models import Animal, MovimentacaoPasto, RegistroDeCusto, CustoAnimalDetalhe, Venda, Abate, BaixaAnimal, Despesa, Lote
+from .models import Animal, MovimentacaoPasto, RegistroDeCusto, CustoAnimalDetalhe, Venda, Abate, BaixaAnimal, Despesa, TipoCusto
 
 
 @receiver(post_save, sender=Despesa)
 def sync_despesa_to_registro_de_custo(sender, instance, created, **kwargs):
-    """Cria ou atualiza um RegistroDeCusto quando uma Despesa é salva."""
     
-    # Prepara a descrição para o RegistroDeCusto
+    # Tenta encontrar ou criar o TipoCusto que corresponde à CategoriaDespesa
+    tipo_custo_obj, _ = TipoCusto.objects.get_or_create(
+        nome=instance.categoria.nome, # Usa o nome da CategoriaDespesa
+        defaults={'descricao': f"Gerado automaticamente pela Despesa {instance.categoria.nome}"}
+    )
+    
     desc_registro = f"[DESP. {instance.categoria.nome}] {instance.descricao}"
 
     if created or not instance.registro_de_custo:
@@ -17,7 +21,7 @@ def sync_despesa_to_registro_de_custo(sender, instance, created, **kwargs):
             data_custo=instance.data_pagamento,
             descricao=desc_registro,
             valor=instance.valor,
-            categoria=instance.categoria.nome # Mantém a categoria para fins de compatibilidade
+            tipo_custo=tipo_custo_obj 
         )
         # Linka a Despesa ao novo RegistroDeCusto
         instance.registro_de_custo = registro
@@ -29,48 +33,34 @@ def sync_despesa_to_registro_de_custo(sender, instance, created, **kwargs):
         registro.data_custo = instance.data_pagamento
         registro.descricao = desc_registro
         registro.valor = instance.valor
-        registro.categoria = instance.categoria.nome
+        registro.tipo_custo = tipo_custo_obj 
         registro.save()
 
 
+# NOVO SIGNAL CONSOLIDADO
+
 @receiver(post_save, sender=MovimentacaoPasto)
-def atualizar_pasto_animal(sender, instance, created, **kwargs):
+def atualizar_animal_e_fechar_movimentacao_anterior(sender, instance, created, **kwargs):
     """
-    Atualiza o campo pasto_atual do animal sempre que uma nova
-    MovimentacaoPasto for criada.
+    Atualiza o campo pasto_atual do animal para o pasto de destino e, 
+    se for uma criação, garante que o campo pasto_origem seja populado 
+    e que a movimentação anterior seja fechada.
     """
     
-    # Se a movimentação tem data_saida em branco, significa que é a movimentação atual.
+    # Esta é a lógica da Admin Action do MovimentacaoPastoAdmin:
+    # 1. Se a movimentação tem data_saida em branco, significa que é a atual.
     if instance.data_saida is None:
         animal = instance.animal
         
-        # 1. Atualiza o pasto_atual do Animal
-        animal.pasto_atual = instance.pasto_destino
-        
-        # 2. Salva o Animal. Usamos update_fields para evitar loops de signal.
-        animal.save(update_fields=['pasto_atual'])
-
-
-@receiver(post_save, sender=MovimentacaoPasto)
-def update_animal_pasto_on_movimentacao(sender, instance, created, **kwargs):
-    """
-    Atualiza o campo 'pasto' do animal para o 'pasto_destino' da movimentação,
-    e preenche o pasto_origem se estiver vazio.
-    """
-    if created:
-        animal = instance.animal
-        
-        # 1. Preenche o pasto de origem automaticamente (Se vier do admin e estiver vazio)
-        if not instance.pasto_origem:
-            instance.pasto_origem = animal.pasto_atual
-            # Salva a instância novamente (apenas o campo de origem)
+        # 1.1. Garante que o pasto de origem foi preenchido corretamente
+        if created and not instance.pasto_origem:
+             # Usa o pasto_atual do Animal ANTES da atualização para preencher a origem
             MovimentacaoPasto.objects.filter(pk=instance.pk).update(pasto_origem=animal.pasto_atual)
 
-        lote_atual = Lote.objects.filter(pasto_atual=animal.pasto_atual)
-        if lote_atual.acount == 1:
-            animal.lote_atual = lote_atual
-        # 2. Atualiza a localização atual do Animal
-        animal.pasto_atual = instance.pasto_destino 
+        # 1.2. Atualiza o pasto_atual do Animal
+        animal.pasto_atual = instance.pasto_destino
+        
+        # 1.3. Salva o Animal. (Importante usar update_fields para evitar recursão com o save do Animal)
         animal.save(update_fields=['pasto_atual'])
 
 
@@ -131,20 +121,20 @@ def alocar_custo_por_pasto(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=Venda)
-def update_animal_status_on_venda(sender, instance, created, **kwargs):
+def update_animal_situacao_on_venda(sender, instance, created, **kwargs):
     if created:
         animal = instance.animal
-        animal.status = 'VENDIDO'
-        animal.save(update_fields=['status']) # Otimiza, salvando apenas o campo status
+        animal.situacao = 'VENDIDO'
+        animal.save(update_fields=['situacao']) # Otimiza, salvando apenas o campo status
 
 
 @receiver(post_save, sender=Abate)
-def update_animal_status_on_abate(sender, instance, created, **kwargs):
+def update_animal_situacao_on_abate(sender, instance, created, **kwargs):
 
     if created:
         animal = instance.animal
-        animal.status = 'ABATIDO'
-        animal.save(update_fields=['status']) # Otimiza, salvando apenas o campo status
+        animal.situacao = 'ABATIDO'
+        animal.save(update_fields=['situacao']) # Otimiza, salvando apenas o campo status
 
 
 @receiver(post_save, sender=BaixaAnimal)
