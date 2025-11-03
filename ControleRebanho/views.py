@@ -42,9 +42,9 @@ class AnimalViewSet(viewsets.ModelViewSet):
         total_animais = self.queryset.count()
         
         # Agregação por pasto
-        resumo_por_pasto = self.queryset.values('pasto__nome').annotate(
-            count=Count('pasto__nome')
-        ).order_by('pasto__nome')
+        resumo_por_pasto = self.queryset.values('pasto_atual__nome').annotate(
+            count=Count('pasto_atual__nome')
+        ).order_by('pasto_atual__nome')
         
         return Response({
             'total_animais': total_animais,
@@ -416,136 +416,6 @@ class DashboardFinanceiroCBV(TemplateView):
         })
         
         return context
-    
-
-# def dashboard_financeiro(request):
-
-#     # --- 1. CONFIGURAÇÃO DE FILTRO DE TEMPO ---
-#     hoje = timezone.localdate()
-#     # Pega o ano atual como padrão
-#     ano_filtro = request.GET.get('ano', str(hoje.year))
-    
-#     # 2. CALCULAR MÉTRICAS GERAIS (Total de Custos vs. Total de Receitas)
-    
-#     # a) Custos Totais (dentro do ano)
-#     # Soma todos os registros de custo do sistema
-#     custos_totais = RegistroCusto.objects.filter(
-#         data_custo__year=ano_filtro
-#     ).aggregate(
-#         total=Coalesce(Sum('valor'), Decimal(0))
-#     )['total']
-
-#     # b) Receitas Totais (dentro do ano)
-#     receita_vendas = Venda.objects.filter(
-#         data_venda__year=ano_filtro
-#     ).aggregate(
-#         total=Coalesce(Sum('valor_total'), Decimal(0))
-#     )['total']
-    
-#     # Para abates, usamos o valor estimado
-#     receita_abates = Abate.objects.filter(
-#         data_abate__year=ano_filtro
-#     ).aggregate(
-#         total=Coalesce(Sum('valor_estimado'), Decimal(0))
-#     )['total']
-
-#     receitas_totais = receita_vendas + receita_abates
-#     lucro_geral = receitas_totais - custos_totais
-    
-#     # 3. LUCRO POR ANIMAL (Detalhamento)
-    
-#     # Identifica animais que saíram (vendidos, abatidos ou mortos) no ano
-#     animais_saidos_ids = set()
-    
-#     vendas_periodo = Venda.objects.filter(data_venda__year=ano_filtro)
-#     for v in vendas_periodo:
-#         animais_saidos_ids.add(v.animal_id)
-
-#     abates_periodo = Abate.objects.filter(data_abate__year=ano_filtro)
-#     for a in abates_periodo:
-#         animais_saidos_ids.add(a.animal_id)
-        
-#     # --- NOVO BLOCO: INCLUIR BAIXAS ---
-#     baixas_periodo = BaixaAnimal.objects.filter(data_baixa__year=ano_filtro)
-#     for b in baixas_periodo:
-#         animais_saidos_ids.add(b.animal_id)
-#     # -----------------------------------
-        
-#     animais_saidos = Animal.objects.filter(id__in=animais_saidos_ids)
-    
-#     detalhe_lucratividade = []
-
-#     for animal in animais_saidos:
-        
-#         # a) Custo Acumulado do Animal (Total de custos alocados)
-#         custo_acumulado = CustoAnimalDetalhe.objects.filter(
-#             animal=animal
-#         ).aggregate(
-#             total=Coalesce(Sum('valor_alocado'), Decimal(0))
-#         )['total']
-        
-#         # b) Receita e Destino
-#         receita_animal = Decimal(0)
-#         destino = "N/A"
-#         data_saida = None
-        
-#         if animal.situacao == 'VENDIDO':
-#             try:
-#                 venda = Venda.objects.get(animal=animal)
-#                 receita_animal = venda.valor_total
-#                 destino = f"Vendido a {venda.comprador}"
-#                 data_saida = venda.data_venda
-#             except Venda.DoesNotExist:
-#                  destino = "VENDIDO (Registro de Venda Ausente)"
-            
-#         elif animal.situacao == 'ABATIDO':
-#             try:
-#                 abate = Abate.objects.get(animal=animal)
-#                 receita_animal = abate.valor_estimado
-#                 destino = f"Abate ({abate.destino_carcaca})"
-#                 data_saida = abate.data_abate
-#             except Abate.DoesNotExist:
-#                  destino = "ABATIDO (Registro de Abate Ausente)"
-
-#         # --- NOVO BLOCO: TRATAMENTO DE BAIXA ---
-#         elif animal.situacao == 'MORTO': 
-#             try:
-#                 baixa = BaixaAnimal.objects.get(animal=animal)
-#                 receita_animal = Decimal(0) # Receita é zero
-#                 destino = f"Morte ({baixa.get_causa_display()})"
-#                 data_saida = baixa.data_baixa
-#             except BaixaAnimal.DoesNotExist:
-#                  destino = "MORTO (Registro de Baixa Ausente)"
-#         # ---------------------------------------
-
-#         # c) Cálculo do Lucro (Para MORTO, lucro = -custo_acumulado)
-#         lucro = receita_animal - custo_acumulado
-        
-#         detalhe_lucratividade.append({
-#             'identificacao': animal.identificacao,
-#             'link': animal.get_absolute_url(),
-#             'data_saida': data_saida,
-#             'destino': destino,
-#             'custo_acumulado': custo_acumulado,
-#             'receita_animal': receita_animal,
-#             'lucro': lucro,
-#         })
-        
-#     # 4. Contexto
-#     context = {
-#         'ano_filtro': ano_filtro,
-#         'anos_disponiveis': range(hoje.year, hoje.year - 5, -1), # Últimos 5 anos
-        
-#         # Key Metrics
-#         'custos_totais': custos_totais,
-#         'receitas_totais': receitas_totais,
-#         'lucro_geral': lucro_geral,
-        
-#         # Detalhe
-#         'detalhe_lucratividade': detalhe_lucratividade,
-#     }
-    
-#     return render(request, 'pecuaria/dashboard_financeiro.html', context)
 
 
 class PastoListView(ListView):
@@ -885,49 +755,6 @@ class AnaliseDesempenhoLotesCBV(TemplateView):
         })
         
         return context
-    
-
-# @login_required
-# def analise_desempenho_lotes(request):
-#     # 1. Obter todos os lotes
-#     lotes = Lote.objects.all()
-    
-#     dados_lotes = []
-    
-#     for lote in lotes:
-#         # 2. Encontrar todos os animais que estão neste lote
-#         animais_no_lote = Animal.objects.filter(lote_atual=lote, situacao='VIVO')
-        
-#         # 3. Calcular o GPMD Médio para os animais neste lote
-#         gpmds_dos_animais = []
-        
-#         # 3. Calcular o GPMD Médio individualmente (em Python)
-#         for animal in animais_no_lote:
-#             gpmd_animal = calcular_gpmd_animal(animal)
-#             if gpmd_animal is not None:
-#                 gpmds_dos_animais.append(gpmd_animal)
-        
-#         gpmd_medio = None
-#         if gpmds_dos_animais:
-#             # Calcula a média dos GPMDs dos animais no lote
-#             gpmd_medio = sum(gpmds_dos_animais) / len(gpmds_dos_animais)
-        
-#         # 4. Reunir os dados
-#         dados_lotes.append({
-#             'lote': lote,
-#             'pasto_atual': lote.pasto_atual.nome if lote.pasto_atual else 'N/A',
-#             'total_animais': animais_no_lote.count(),
-#             'gpmd_medio': round(gpmd_medio, 2) if gpmd_medio is not None else 'N/A'
-#         })
-
-#         # 5. Ordenação (Opcional, mas útil)
-#         dados_lotes.sort(key=lambda x: x['gpmd_medio'] if x['gpmd_medio'] != 'N/A' else -1, reverse=True)
-
-#     context = {
-#         'dados_lotes': dados_lotes,
-#     }
-    
-#     return render(request, 'pecuaria/analise_lotes.html', context)
 
 
 @login_required

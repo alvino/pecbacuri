@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Q
-from .models import Animal, MovimentacaoPasto, RegistroDeCusto, CustoAnimalDetalhe, Venda, Abate, BaixaAnimal, Despesa
+from .models import Animal, MovimentacaoPasto, RegistroDeCusto, CustoAnimalDetalhe, Venda, Abate, BaixaAnimal, Despesa, Lote
 
 
 @receiver(post_save, sender=Despesa)
@@ -65,10 +65,13 @@ def update_animal_pasto_on_movimentacao(sender, instance, created, **kwargs):
             instance.pasto_origem = animal.pasto_atual
             # Salva a instância novamente (apenas o campo de origem)
             MovimentacaoPasto.objects.filter(pk=instance.pk).update(pasto_origem=animal.pasto_atual)
-        
+
+        lote_atual = Lote.objects.filter(pasto_atual=animal.pasto_atual)
+        if lote_atual.acount == 1:
+            animal.lote_atual = lote_atual
         # 2. Atualiza a localização atual do Animal
-        animal.pasto_atual = instance.pasto_destino
-        animal.save(update_fields=['pasto'])
+        animal.pasto_atual = instance.pasto_destino 
+        animal.save(update_fields=['pasto_atual'])
 
 
 @receiver(post_save, sender=RegistroDeCusto)

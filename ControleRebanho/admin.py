@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django import forms
 from django.db import transaction
 from django.shortcuts import render, redirect
@@ -163,12 +163,88 @@ class MovimentacaoLoteForm(forms.Form):
         widget=admin.widgets.AdminDateWidget,
         label="Data da Movimentação"
     )
+    observacoes = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False,
+        label="Observações da Movimentação"
+    )
+
+
+ # ----------------------------------------------------
+# A C T I O N S
+# ----------------------------------------------------
+
+@admin.action(description='Mover animais para novo Pasto (Lote)')
+def movimentar_em_lote(modeladmin, request, queryset):
+    # Passo 1: Verifica se é um POST do formulário
+    if 'apply' in request.POST:
+        form = MovimentacaoLoteForm(request.POST)
+        if form.is_valid():
+            pasto_destino = form.cleaned_data['pasto_destino']
+            data_movimentacao = form.cleaned_data['data_movimentacao']
+            observacoes = form.cleaned_data['observacoes']
+            try:
+                with transaction.atomic():
+                    movimentados_count = 0
+
+                    for animal in queryset:
+                        pasto_origem = animal.pasto_atual
+                        
+                        MovimentacaoPasto.objects.create(
+                            animal=animal,
+                            pasto_origem=pasto_origem,
+                            pasto_destino=pasto_destino,
+                            data_entrada=data_movimentacao,
+                            motivo=observacoes
+                        )
+
+                        animal.pasto_atual = pasto_destino
+                        animal.save(update_fields=['pasto_atual'])
+
+                        movimentados_count += 1
+                modeladmin.message_user(
+                        request,
+                        f"{movimentados_count} animal(is) movimentado(s) com sucesso para o pasto/lote '{pasto_destino.nome}'.",
+                        messages.SUCCESS
+                    )
+            except Exception as e:
+                # Mensagem de erro
+                modeladmin.message_user(
+                    request,
+                    f"Erro ao movimentar os animais: {e}",
+                    messages.ERROR
+                )
+            return redirect('admin:%s_%s_changelist' % (modeladmin.model._meta.app_label, modeladmin.model._meta.model_name))
+    
+    else:
+        # Se for o GET, inicializa o formulário vazio
+        form = MovimentacaoLoteForm()
+
+    # --- Contexto para Renderização do Template ---
+    context = {
+        'opts': modeladmin.model._meta, 
+        'queryset': queryset,
+        'action_form': form,
+        'title': "Movimentar Lote",
+        'media': modeladmin.media,
+        'action_name': 'movimentar_em_lote', 
+        'action_checkbox_name': admin.helpers.ACTION_CHECKBOX_NAME,
+    }
+
+    # Renderiza o template
+    return render(
+        request, 
+        'admin/movimentar_lote_action.html', 
+        context=context
+    )
+    
 
 @admin.register(Animal)
 class AnimalAdmin(ImportExportModelAdmin):
-    model = Animal
 
-    resource_class = AnimalResource # Adiciona o resource que acabamos de criar
+    resource_class = AnimalResource
+
+    actions = [movimentar_em_lote]
 
     list_display = ('identificacao', 'data_nascimento', 'idade_meses', 'sexo', 'situacao', 'lote_atual')
     list_filter = ('situacao', 'sexo', 'lote_atual')
@@ -203,58 +279,7 @@ class AnimalAdmin(ImportExportModelAdmin):
             )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-    actions = ['movimentar_em_lote']
-
-    # ----------------------------------------------------
-    # A C T I O N S
-    # ----------------------------------------------------
-
-    @admin.action(description='Mover animais para novo Pasto (Lote)')
-    def movimentar_em_lote(self, request, queryset):
-        # Passo 1: Verifica se é um POST do formulário
-        if 'apply' in request.POST:
-            form = MovimentacaoLoteForm(request.POST)
-            if form.is_valid():
-                pasto_destino = form.cleaned_data['pasto_destino']
-                data_movimentacao = form.cleaned_data['data_movimentacao']
-                
-                movimentacoes_criadas = 0
-                
-                with transaction.atomic():
-                    for animal in queryset:
-                        pasto_origem = animal.pasto
-                        
-                        # 1. Cria o registro de MovimentacaoPasto (que dispara o signal)
-                        MovimentacaoPasto.objects.create(
-                            animal=animal,
-                            pasto_origem=pasto_origem,
-                            pasto_destino=pasto_destino,
-                            data_movimentacao=data_movimentacao
-                        )
-                        movimentacoes_criadas += 1
-
-                self.message_user(
-                    request,
-                    f"{movimentacoes_criadas} animais movidos com sucesso para o pasto {pasto_destino.nome}."
-                )
-                return redirect(request.get_full_path())
-        
-        # Passo 2: Exibe o formulário de confirmação
-        else:
-            form = MovimentacaoLoteForm()
-            
-        context = self.admin_site.each_context(request)
-        context['title'] = "Movimentar Animais em Lote"
-        context['queryset'] = queryset
-        context['form'] = form
-        # context['opts'] = self.model._meta
-        
-        # Renderiza um template personalizado para a action
-        return render(
-            request,
-            'admin/movimentar_lote_action.html',
-            context
-        )
+    
 
 
 @admin.register(Pasto)
