@@ -19,6 +19,12 @@
                     {{ action_form.pasto_destino|add_class:"form-select" }}
                     {% if action_form.pasto_destino.errors %}{{ action_form.pasto_destino.errors }}{% endif %}
                 </div>
+
+                <div class="form-row">
+                    {{ action_form.data_entrada.label_tag }}
+                    {{ action_form.data_entrada|add_class:"form-select" }}
+                    {% if action_form.data_entrada.errors %}{{ action_form.data_entrada.errors }}{% endif %}
+                </div>
                 
                 <div class="form-row">
                     {{ action_form.observacoes.label_tag }}

@@ -636,30 +636,53 @@ def analise_idade(request):
     
     # Dicionário para armazenar as contagens por categoria
     categorias_idade = {
-        'Bezerros (0 a 7 meses)': 0,
-        'Bezerras (0 a 7 meses)': 0,
-        'Desmama Macho (7 a 12 meses)': 0,
-        'Desmama Femea (7 a 12 meses)': 0,
-        'Novilhas/Garrotes (12 a 24 meses)': 0,
-        'Adultos (> 24 meses)': 0,
+    
+        'Femeas (0 a 12 meses)': 0,
+        'Machos (0 a 12 meses)': 0,
+        'Femeas (13 a 24 meses)': 0,
+        'Machos (13 a 24 meses)': 0,
+        'Femeas (25 a 36 meses)': 0,
+        'Machos (25 a 36 meses)': 0,
+        'Femeas (+ de 36 meses)': 0,
+        'Machos (+ de 36 meses)': 0,
+        'Total de Femeas': 0,
+        'Total de Machos': 0,
     }
     
     for animal in animais_ativos:
         if animal.data_nascimento:
             
+
+            # Total conforme o sexo
+
+            if animal.sexo == 'M':
+                categorias_idade['Total de Machos'] += 1
+            else:
+                categorias_idade['Total de Femeas'] += 1
+
             # Categorização por faixa etária (adaptada ao Nelore de cria)
-            if animal.idade_meses < 7 and animal.sexo == 'M':
-                categorias_idade['Bezerros (0 a 7 meses)'] += 1
-            elif animal.idade_meses < 7 and animal.sexo == 'F':
-                categorias_idade['Bezerras (0 a 7 meses)'] += 1
-            elif animal.idade_meses >= 7 and animal.idade_meses <= 12 and animal.sexo == 'M':
-                categorias_idade['Desmama Macho (7 a 12 meses)'] += 1
-            elif animal.idade_meses >= 7 and animal.idade_meses <= 12 and animal.sexo == 'F':
-                categorias_idade['Desmama Femea (7 a 12 meses)'] += 1
+           
+            if animal.idade_meses > 0 and animal.idade_meses <= 12:
+                if animal.sexo == 'M':
+                    categorias_idade['Machos (0 a 12 meses)'] += 1
+                else:
+                    categorias_idade['Femeas (0 a 12 meses)'] += 1
             elif animal.idade_meses > 12 and animal.idade_meses <= 24:
-                categorias_idade['Novilhas/Garrotes (12 a 24 meses)'] += 1
-            else: # Mais de 24 meses (2 anos)
-                categorias_idade['Adultos (> 24 meses)'] += 1
+                if animal.sexo == 'M':
+                    categorias_idade['Machos (13 a 24 meses)'] += 1
+                else: 
+                    categorias_idade['Femeas (13 a 24 meses)'] += 1
+            elif animal.idade_meses > 24 and animal.idade_meses <= 36:
+                if animal.sexo == 'M':
+                    categorias_idade['Machos (25 a 36 meses)'] += 1
+                else:
+                    categorias_idade['Femeas (25 a 36 meses)'] += 1
+           
+            else: # Mais de 36 meses (3 anos)
+                if animal.sexo == 'F':
+                    categorias_idade['Femeas (+ de 36 meses)'] += 1
+                else:
+                    categorias_idade['Macho (+ de 36 meses)'] += 1
 
     context = {
         'categorias_idade': categorias_idade,

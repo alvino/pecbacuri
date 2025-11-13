@@ -41,37 +41,34 @@ def sync_despesa_to_registro_de_custo(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=MovimentacaoPasto)
 def atualizar_animal_e_fechar_movimentacao_anterior(sender, instance, created, **kwargs):
-    """
-    Atualiza o campo pasto_atual do animal para o pasto de destino e, 
-    se for uma criação, garante que o campo pasto_origem seja populado 
-    e que a movimentação anterior seja fechada.
-    """
-    
-    # Esta é a lógica da Admin Action do MovimentacaoPastoAdmin:
-    # 1. Se a movimentação tem data_saida em branco, significa que é a atual.
+   # 1. Apenas processa se for uma movimentação em aberto (a atual)
     if instance.data_saida is None:
         animal = instance.animal
         
-        # 1.1. Garante que o pasto de origem foi preenchido corretamente
-        if created and not instance.pasto_origem:
-             # Usa o pasto_atual do Animal ANTES da atualização para preencher a origem
-            MovimentacaoPasto.objects.filter(pk=instance.pk).update(pasto_origem=animal.pasto_atual)
+        # Lógica que só roda na criação de um novo registro:
+        if created:
 
-        # 1.2. Atualiza o pasto_atual do Animal
+            # 1.2. 🚩 NOVO: FECHA A MOVIMENTAÇÃO ANTERIOR (garantindo que só uma esteja aberta)
+            # Filtra todas as movimentações abertas para este animal, exceto a atual
+            movimentacao_anterior = MovimentacaoPasto.objects.filter(
+                animal=animal,
+                data_saida__isnull=True
+            ).exclude(pk=instance.pk).first()
+
+            # Se encontrar, feche-a
+            if movimentacao_anterior:
+                # Usa .update() para evitar disparar este signal novamente
+                MovimentacaoPasto.objects.filter(pk=movimentacao_anterior.pk).update(data_saida=instance.data_entrada)
+        
+        # 2. Atualiza o pasto_atual do Animal (Roda na criação e em updates da movimentação)
         animal.pasto_atual = instance.pasto_destino
         
-        # 1.3. Salva o Animal. (Importante usar update_fields para evitar recursão com o save do Animal)
+        # 3. Salva o Animal.
         animal.save(update_fields=['pasto_atual'])
 
 
 @receiver(post_save, sender=RegistroDeCusto)
 def alocar_custo_por_pasto(sender, instance, created, **kwargs):
-
-    """
-    Executa a alocação de custos por pasto para os animais que 
-    estavam nele na data do registro.
-    """
-    
     # 1. Verifica se o custo se aplica a um pasto
     if instance.pasto and created:
         pasto_destino = instance.pasto
