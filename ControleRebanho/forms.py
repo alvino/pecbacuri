@@ -6,7 +6,7 @@ from .models import Pasto, Lote
 
 
 # Formulário temporário para a Action
-class MudarPastoForm(forms.Form):
+class MudarPastoLoteForm(forms.Form):
     pasto_destino = forms.ModelChoiceField(
         queryset=Pasto.objects.all(),
         label="Pasto de Destino",

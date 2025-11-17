@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from import_export.admin import ImportExportModelAdmin # 1. Importar o mixin
 from import_export import resources
 from .models import Animal, Pasto, TratamentoSaude, Reproducao, Pesagem, Lote, MovimentacaoPasto, TipoCusto, RegistroDeCusto, CategoriaDespesa, CustoAnimalDetalhe, TarefaManejo, Venda, Abate, BaixaAnimal, Despesa
-from .actions import movimentar_animais, mudar_pasto_lote, mudar_lote_animal
+from .actions import mover_pasto_animais, mudar_pasto_lote, mudar_lote_animais
 
 @admin.register(CategoriaDespesa)
 class CategoriaDespesaAdmin(admin.ModelAdmin):
@@ -148,7 +148,7 @@ class AnimalAdmin(ImportExportModelAdmin):
 
     resource_class = AnimalResource
 
-    actions = [movimentar_animais,mudar_lote_animal]
+    actions = [mover_pasto_animais,mudar_lote_animais]
 
     list_display = ('identificacao', 'data_nascimento', 'idade_meses', 'sexo', 'situacao', 'lote_atual')
     list_filter = ('situacao', 'sexo', 'lote_atual')
