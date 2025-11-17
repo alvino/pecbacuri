@@ -5,7 +5,7 @@ from django.contrib import messages, auth
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Avg, F, Q, Count, Sum
+from django.db.models import Avg, F, Q, Count, Sum, Count, Case, When, IntegerField, ExpressionWrapper, FloatField
 from django.db.models.functions import Coalesce
 from datetime import date, timedelta
 from django.utils import timezone
@@ -630,66 +630,114 @@ def dashboard(request):
     return render(request, 'pecuaria/dashboard.html', context)
 
 
-@login_required
-def analise_idade(request):
-    animais_ativos = Animal.objects.filter(situacao='VIVO').all()
+# Define as categorias de idade em meses
+# Você pode ajustar estas faixas conforme a sua necessidade zootécnica
+IDADE_CATEGORIAS = [
+    (12, '0 a 12 Meses (Cria)'),
+    (24, '13 a 24 Meses (Recria)'),
+    (36, '25 a 36 Meses (Recria Avançada)'),
+    (999, 'Acima de 36 Meses (Matrizes/Reprodutores)'),
+]
+
+# Limites para a análise detalhada de bezerros (1 a 9 meses)
+BEZERRO_LIMITES = list(range(1, 10)) # [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+class AnalisePorIdadeView(TemplateView):
+    template_name = 'pecuaria/analise_por_idade.html'
     
-    # Dicionário para armazenar as contagens por categoria
-    categorias_idade = {
-    
-        'Femeas (0 a 12 meses)': 0,
-        'Machos (0 a 12 meses)': 0,
-        'Femeas (13 a 24 meses)': 0,
-        'Machos (13 a 24 meses)': 0,
-        'Femeas (25 a 36 meses)': 0,
-        'Machos (25 a 36 meses)': 0,
-        'Femeas (+ de 36 meses)': 0,
-        'Machos (+ de 36 meses)': 0,
-        'Total de Femeas': 0,
-        'Total de Machos': 0,
-    }
-    
-    for animal in animais_ativos:
-        if animal.data_nascimento:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        
+        # 1. CÁLCULO DA IDADE CORRIGIDO
+        # Calcula a diferença de datas (DurationField)
+        duration_expr = today - F('data_nascimento')
+        
+        # Converte a Duration para dias (dividindo pela duração de um dia) e define o resultado como Float
+        idade_em_dias_expr = ExpressionWrapper(
+            duration_expr / timedelta(days=1),
+            output_field=FloatField() # Garante que o resultado é um número (dias)
+        )
+        
+        # Converte dias para meses (dividindo por 30.4 dias/mês)
+        idade_em_meses_expr = ExpressionWrapper(
+            idade_em_dias_expr / 30.4,
+            output_field=IntegerField() # O resultado final que queremos para categorização
+        )
+
+        # Filtra animais vivos com data de nascimento válida
+        animais_base = Animal.objects.filter(
+            situacao='VIVO',
+            data_nascimento__isnull=False,
+        ).annotate(
+            idade_meses=idade_em_meses_expr # Usa a nova expressão corrigida
+        )
+        
+        # --- 2. Análise Detalhada dos Bezerros (0 a 9 meses) ---
+        analise_bezerros = []
+        limite_anterior = 0
+
+        for limite_meses in BEZERRO_LIMITES:
             
+            # Filtra os animais na faixa atual (maior que o limite anterior, menor ou igual ao limite atual)
+            animais_na_faixa = animais_base.filter(
+                idade_meses__gt=limite_anterior,
+                idade_meses__lte=limite_meses
+            )
+            
+            # Conta machos e fêmeas na faixa
+            contagem_sexo = animais_na_faixa.aggregate(
+                machos=Count(Case(When(sexo='M', then=1), output_field=IntegerField())),
+                femeas=Count(Case(When(sexo='F', then=1), output_field=IntegerField())),
+                total=Count('id')
+            )
+            
+            # Cria o nome da categoria
+            nome_categoria = f'{limite_anterior} a {limite_meses} Meses'
+            
+            analise_bezerros.append({
+                'categoria': nome_categoria,
+                'machos': contagem_sexo['machos'],
+                'femeas': contagem_sexo['femeas'],
+                'total': contagem_sexo['total'],
+                'porcentagem': 0 # Será calculado no template
+            })
+            
+            limite_anterior = limite_meses # O novo limite anterior será o limite atual (9 meses)
 
-            # Total conforme o sexo
 
-            if animal.sexo == 'M':
-                categorias_idade['Total de Machos'] += 1
-            else:
-                categorias_idade['Total de Femeas'] += 1
+        # --- 3. Análise Geral (começa após 9 meses) ---
+        analise_geral = []
+        limite_anterior = 9 # Continua de onde os bezerros pararam
 
-            # Categorização por faixa etária (adaptada ao Nelore de cria)
-           
-            if animal.idade_meses > 0 and animal.idade_meses <= 12:
-                if animal.sexo == 'M':
-                    categorias_idade['Machos (0 a 12 meses)'] += 1
-                else:
-                    categorias_idade['Femeas (0 a 12 meses)'] += 1
-            elif animal.idade_meses > 12 and animal.idade_meses <= 24:
-                if animal.sexo == 'M':
-                    categorias_idade['Machos (13 a 24 meses)'] += 1
-                else: 
-                    categorias_idade['Femeas (13 a 24 meses)'] += 1
-            elif animal.idade_meses > 24 and animal.idade_meses <= 36:
-                if animal.sexo == 'M':
-                    categorias_idade['Machos (25 a 36 meses)'] += 1
-                else:
-                    categorias_idade['Femeas (25 a 36 meses)'] += 1
-           
-            else: # Mais de 36 meses (3 anos)
-                if animal.sexo == 'F':
-                    categorias_idade['Femeas (+ de 36 meses)'] += 1
-                else:
-                    categorias_idade['Macho (+ de 36 meses)'] += 1
+        for limite_meses, nome_categoria in IDADE_CATEGORIAS:
+            
+            animais_na_faixa = animais_base.filter(
+                idade_meses__gt=limite_anterior,
+                idade_meses__lte=limite_meses
+            )
+            
+            contagem_sexo = animais_na_faixa.aggregate(
+                machos=Count(Case(When(sexo='M', then=1), output_field=IntegerField())),
+                femeas=Count(Case(When(sexo='F', then=1), output_field=IntegerField())),
+                total=Count('id')
+            )
+            
+            analise_geral.append({
+                'categoria': nome_categoria,
+                'machos': contagem_sexo['machos'],
+                'femeas': contagem_sexo['femeas'],
+                'total': contagem_sexo['total'],
+                'porcentagem': 0
+            })
+            
+            limite_anterior = limite_meses
 
-    context = {
-        'categorias_idade': categorias_idade,
-    }
-    
-    return render(request, 'pecuaria/analise_idade.html', context)
-
+        context['analise_bezerros'] = analise_bezerros
+        context['analise_geral'] = analise_geral
+        context['total_geral'] = animais_base.count() # Total de animais na análise
+        
+        return context
 
 
 # --- TRATAMENTO DE SAÚDE ---
