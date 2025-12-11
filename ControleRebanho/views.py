@@ -19,7 +19,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Animal, RegistroDeCusto, Venda, Abate
-from .serializers import AnimalSerializer # Importe o Serializer que criamos
+from .serializers import AnimalSerializer 
+from .filters import AnimalFilter
 
 # -----------------------------------------------
 # API - Módulo Básico de Rebanho
@@ -451,11 +452,22 @@ class AnimalListView(ListView):
     queryset = Animal.objects.filter(situacao='VIVO').order_by('identificacao')
     paginate_by = 25 # Opção para paginar os resultados
     
+    def get_queryset(self):
+        # 1. Obtém o queryset base (todos os animais)
+        queryset = super().get_queryset()
+        
+        # 2. Cria o objeto Filter com os dados GET (query string) e o queryset
+        self.filter = AnimalFilter(self.request.GET, queryset=queryset)
+        
+        # 3. Retorna o queryset filtrado
+        return self.filter.qs
+    
     # Adicionando contexto extra (se precisar de contagens ou filtros)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Exemplo de contexto extra para o template:
         context['total_ativo'] = Animal.objects.filter(situacao='VIVO').count()
+        context['filter'] = self.filter
         return context
     
 

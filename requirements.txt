@@ -6,3 +6,13 @@ django-widget-tweaks==1.5.0
 djangorestframework==3.16.1
 sqlparse==0.5.3
 tablib==3.8.0
+asarPy==1.0.1
+asgiref==3.9.2
+diff-match-patch==20241021
+Django==5.2.6
+django-filter==25.2
+django-import-export==4.3.10
+django-widget-tweaks==1.5.0
+djangorestframework==3.16.1
+sqlparse==0.5.3
+tablib==3.8.0

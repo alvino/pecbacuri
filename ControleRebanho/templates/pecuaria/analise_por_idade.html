@@ -8,10 +8,11 @@
     <div class="row mb-4">
         <div class="col-12">
             <h1>Análise de Rebanho por Categoria de Idade</h1>
-            <p class="text-muted">Distribuição de machos e fêmeas por faixa etária (animais VIVOS com data de nascimento).</p>
+            <p class="text-muted">Distribuição de machos e fêmeas por faixa etária (animais VIVOS com data de
+                nascimento).</p>
         </div>
     </div>
-    
+
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card border-primary">
@@ -45,25 +46,25 @@
                                 {% for item in analise_bezerros %}
                                 <tr>
                                     <td class="fw-bold">{{ item.categoria }}</td>
-                                    
+
                                     <td class="text-center">
-                                        <span class="badge text-bg-primary">{{ item.machos }}</span>
+                                        <span class="text-primary">{{ item.machos }}</span>
                                     </td>
-                                    
+
                                     <td class="text-center">
-                                        <span class="badge text-bg-danger">{{ item.femeas }}</span>
+                                        <span class="text-danger">{{ item.femeas }}</span>
                                     </td>
-                                    
+
                                     <td class="text-center fw-bold">
                                         {{ item.total }}
                                     </td>
-                                    
+
                                     <td class="text-center">
                                         {% if total_geral > 0 %}
-                                            {% widthratio item.total total_geral 100 as percent %}
-                                            <span class="text-success fw-bold">{{ percent }}%</span>
+                                        {% widthratio item.total total_geral 100 as percent %}
+                                        <span class="text-success fw-bold">{{ percent }}%</span>
                                         {% else %}
-                                            0%
+                                        0%
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -75,7 +76,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -98,25 +99,25 @@
                                 {% for item in analise_geral %}
                                 <tr>
                                     <td class="fw-bold">{{ item.categoria }}</td>
-                                    
+
                                     <td class="text-center">
-                                        <span class="badge text-bg-primary">{{ item.machos }}</span>
+                                        <span class="text-primary">{{ item.machos }}</span>
                                     </td>
-                                    
+
                                     <td class="text-center">
-                                        <span class="badge text-bg-danger">{{ item.femeas }}</span>
+                                        <span class="text-danger">{{ item.femeas }}</span>
                                     </td>
-                                    
+
                                     <td class="text-center fw-bold">
                                         {{ item.total }}
                                     </td>
-                                    
+
                                     <td class="text-center">
                                         {% if total_geral > 0 %}
-                                            {% widthratio item.total total_geral 100 as percent %}
-                                            <span class="text-success fw-bold">{{ percent }}%</span>
+                                        {% widthratio item.total total_geral 100 as percent %}
+                                        <span class="text-success fw-bold">{{ percent }}%</span>
                                         {% else %}
-                                            0%
+                                        0%
                                         {% endif %}
                                     </td>
                                 </tr>
