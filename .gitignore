@@ -3,3 +3,7 @@
 /db copy.sqlite3
 /db.sqlite3
 ControleRebanho/migrations/0001_initial.py
+.vscode
+/venv
+/staticfiles_root
+

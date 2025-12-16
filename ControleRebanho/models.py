@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from datetime import date, timedelta 
 from django.db.models import Q 
 from django.utils import timezone 
@@ -261,6 +262,14 @@ class Animal(models.Model):
             return idade_meses
         else:
             return 0
+        
+    def get_absolute_url(self):
+        """ Retorna a URL para a instância do objeto (AnimalDetailView). """
+        # O 'pk=self.pk' usa a chave primária para construir a URL
+        return reverse('animal_detail', kwargs={'pk': self.pk}) 
+        
+        # Se você estivesse usando slug, seria:
+        # return reverse('animal_detail', kwargs={'animal_slug': self.slug})
         
     def calcular_gpmd_animal(self, dias_filtro=None):
         """Calcula o GPMD (em kg/dia) com base no histórico de pesagens."""
@@ -621,6 +630,14 @@ class Reproducao(models.Model):
             self.data_parto_prevista = self.data_cio + timedelta(days=285)
             
         super().save(*args, **kwargs)
+
+    def dias_para_parir(self):
+        """ Retorna quantos dias faltam para a parição. """
+        if self.data_parto_prevista:
+            dias = (self.data_parto_prevista - timezone.localdate()).days
+            return dias
+        return None
+    
 
     class Meta:
         verbose_name = "Manejo Reprodutivo"

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import DashboardFinanceiroCBV, AnaliseDesempenhoLotesCBV, AlertaRiscoListView, AnimalViewSet, AnalisePorIdadeView
+from .views import DashboardFinanceiroCBV, AnaliseDesempenhoLotesCBV, AlertaRiscoListView, AnimalViewSet, AnalisePorIdadeView, DashboardView
 from rest_framework.routers import DefaultRouter
 
 
@@ -20,8 +20,8 @@ urlpatterns = [
     path('pasto/<int:pk>/', views.PastoDetailView.as_view(), name='pasto_detail'),
     path('animais/', views.AnimalListView.as_view(), name='animal_list'),
     path('animal/<int:pk>/', views.AnimalDetailView.as_view(), name='animal_detail'), 
-    path('', views.dashboard, name='dashboard'),
-    path('home', views.dashboard, name='home'),
+    path('', DashboardView.as_view(), name='dashboard'),
+    path('home', DashboardView.as_view(), name='home'),
     path('tratamentos', views.TratamentoSaudeListView.as_view(), name='tratamentos_saude_list'),
     path('reproducao', views.ReproducaoListView.as_view(), name='manejo_reprodutivo_list'),
     path('controle_peso/', views.PesagemListView.as_view(), name='controle_peso_list'),
