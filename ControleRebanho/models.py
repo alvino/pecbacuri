@@ -271,6 +271,18 @@ class Animal(models.Model):
         # Se você estivesse usando slug, seria:
         # return reverse('animal_detail', kwargs={'animal_slug': self.slug})
         
+    # Em models.py dentro da classe Animal
+    def ganho_medio_diario(self):
+        pesagens = self.pesagens.all().order_by('-data_pesagem')[:2]
+        if pesagens.count() == 2:
+            p_atual = pesagens[0]
+            p_anterior = pesagens[1]
+            diff_peso = p_atual.peso - p_anterior.peso
+            diff_dias = (p_atual.data_pesagem - p_anterior.data_pesagem).days
+            if diff_dias > 0:
+                return diff_peso / diff_dias
+        return 0
+    
     def calcular_gpmd_animal(self, dias_filtro=None):
         """Calcula o GPMD (em kg/dia) com base no histórico de pesagens."""
         pesagens = self.historico_pesagens.all().order_by('data_pesagem')

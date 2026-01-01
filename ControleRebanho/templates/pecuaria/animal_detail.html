@@ -16,7 +16,7 @@
             <span class="badge bg-success">{{ animal.get_situacao_display }}</span>
         {% endif %}
     </h1>
-
+    
     <div class="row g-3 mb-5">
         
         <div class="col-md-3">
@@ -62,6 +62,7 @@
 
     </div>
 
+
     <ul class="nav nav-tabs" id="animalTabs" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button" role="tab">Geral & Pasto</button></li>
         <li class="nav-item" role="presentation"><button class="nav-link" id="pesagem-tab" data-bs-toggle="tab" data-bs-target="#pesagem-pane" type="button" role="tab">Pesagem</button></li>
@@ -74,6 +75,10 @@
         
         <div class="tab-pane fade show active" id="info-pane" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
             <h3>Informações Gerais</h3>
+            <a href="{% url 'animal_update' animal.id %}" class="btn btn-primary">
+                <i class="bi bi-calendar-event"></i> Alterar Dados
+            </a>
+             
             <p><strong>Pasto Atual:</strong> 
                 {% if animal.pasto_atual %}
                     <a href="{% url 'pasto_detail' pk=animal.pasto_atual.pk %}">{{ animal.pasto_atual.nome }}</a>
@@ -127,13 +132,15 @@
 
         <div class="tab-pane fade" id="pesagem-pane" role="tabpanel" aria-labelledby="pesagem-tab" tabindex="0">
             <h3>Histórico de Pesagem</h3>
-            <a href="{% url 'admin:ControleRebanho_pesagem_add' %}?animal={{ animal.pk }}" class="btn btn-sm btn-primary mb-3">Registrar Nova Pesagem</a>
+            <a href="{% url 'animal_pesagem_create' animal.id %}" class="btn btn-primary">
+                <i class="bi bi-capsule"></i> Registar Pesagem
+            </a>
+            
             <table class="table table-striped table-sm">
                 <thead class="table-light">
                     <tr>
                         <th>Data</th>
                         <th>Peso (Kg)</th>
-                        <th>GPMD (Kg/dia)</th>
                         <th>Observações</th>
                     </tr>
                 </thead>
@@ -141,15 +148,8 @@
                     {% for pesagem in pesagens %}
                     <tr>
                         <td>{{ pesagem.data_pesagem }}</td>
-                        <td>{{ pesagem.peso|floatformat:2 }}</td>
-                        <td>
-                            {% if pesagem.gpmd %}
-                                {{ pesagem.gpmd|floatformat:2 }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ pesagem.observacoes|default:"-" }}</td>
+                        <td>{{ pesagem.peso_kg|floatformat:2 }}</td>
+                        <td>{{ pesagem.evento|default:"-" }}</td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="4">Nenhuma pesagem registrada.</td></tr>
@@ -160,7 +160,11 @@
         
         <div class="tab-pane fade" id="saude-pane" role="tabpanel" aria-labelledby="saude-tab" tabindex="0">
             <h3>Histórico de Saúde e Tratamentos</h3>
-             <a href="{% url 'admin:ControleRebanho_tratamentosaude_add' %}?animal={{ animal.pk }}" class="btn btn-sm btn-primary mb-3">Registrar Tratamento</a>
+
+             <a href="{% url 'tratamento_create' animal.id %}" class="btn btn-primary">
+                <i class="bi bi-capsule"></i> Registar Tratamento
+            </a>
+            
             <table class="table table-striped table-sm">
                 <thead class="table-light">
                     <tr>
@@ -187,7 +191,9 @@
 
         <div class="tab-pane fade" id="repro-pane" role="tabpanel" aria-labelledby="repro-tab" tabindex="0">
             <h3>Histórico Reprodutivo</h3>
-            <a href="{% url 'admin:ControleRebanho_reproducao_add' %}?matriz={{ animal.pk }}" class="btn btn-sm btn-primary mb-3">Registrar Cobertura/IA</a>
+            <a href="{% url 'reproducao_create' animal.id %}" class="btn btn-warning">
+                <i class="bi bi-calendar-event"></i> Registar Parição/Cobertura
+            </a>
             <table class="table table-striped table-sm">
                 <thead class="table-light">
                     <tr>

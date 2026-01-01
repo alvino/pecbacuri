@@ -1,8 +1,9 @@
 # ControleRebanho/views.py
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
 from django.contrib import messages, auth
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView
 from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Avg, F, Q, Count, Sum, Count, Case, When, IntegerField, ExpressionWrapper, FloatField
@@ -11,16 +12,16 @@ from datetime import date, timedelta
 from django.utils import timezone
 from decimal import Decimal
 
-from .models import Animal, TratamentoSaude, Reproducao, Pesagem, Lote, Pasto, RegistroDeCusto, CustoAnimalDetalhe, TarefaManejo, Venda, Abate, BaixaAnimal
-
 
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Animal, RegistroDeCusto, Venda, Abate
+
 from .serializers import AnimalSerializer 
 from .filters import AnimalFilter
+from .models import Animal, TratamentoSaude, Reproducao, Pesagem, Lote, Pasto, RegistroDeCusto, CustoAnimalDetalhe, TarefaManejo, Venda, Abate, BaixaAnimal
+from .forms import AnimalForm, AnimalTratamentoForm, AnimalReproducaoForm, PastoForm, PesagemForm, AnimalPesagemForm
 
 # -----------------------------------------------
 # API - Módulo Básico de Rebanho
@@ -442,6 +443,19 @@ class PastoDetailView(LoginRequiredMixin, DetailView):
         
         return context
 
+class PastoCreateView(LoginRequiredMixin, CreateView):
+    model = Pasto
+    form_class = PastoForm
+    template_name = 'pecuaria/pasto_form.html'
+    success_url = reverse_lazy('pasto_list') # Redireciona para a lista após salvar
+
+
+class PastoUpdateView(LoginRequiredMixin, UpdateView):
+    model = Pasto
+    form_class = PastoForm
+    template_name = 'pecuaria/pasto_form.html'
+    success_url = reverse_lazy('pasto_list')
+
 
 class AnimalListView(ListView):
     model = Animal
@@ -494,12 +508,14 @@ class AnimalDetailView(LoginRequiredMixin, DetailView):
         if pesagens.exists():
             context['ultima_pesagem'] = pesagens.first()
             
-            # GPMD Médio (Calcula a média de todos os GPMDs registrados)
-            gpmd_medio = pesagens.exclude(gpmd__isnull=True).aggregate(media_gpmd=Sum('gpmd') / Count('gpmd'))['media_gpmd']
-            context['gpmd_medio'] = gpmd_medio
+            # Usa o método que você já criou para calcular os dados de GPMD
+            dados_gpmd = self.calcular_gpmd(pesagens)
+            context['gpmd_medio'] = animal.calcular_gpmd_animal()
+            context['gpmd_recente'] = dados_gpmd['gpmd'] # GPMD em gramas entre as duas últimas pesagens
+            context['detalhe_gpmd'] = dados_gpmd # Contém dias, peso anterior, etc.
         else:
             context['ultima_pesagem'] = None
-            context['gpmd_medio'] = 0
+            context['gpmd_recente'] = 0
 
         # --- 3. Histórico de Movimentação de Pasto ---
         context['movimentacoes_pasto'] = animal.movimentacoes_pasto.all().order_by('-data_entrada')
@@ -563,6 +579,72 @@ class AnimalDetailView(LoginRequiredMixin, DetailView):
             'gpmd': None,
             'gpmd_peso_recente': pesagens.last().peso_kg if pesagens.count() == 1 else None # Mostra 1ª pesagem
         }
+
+
+class AnimalCreateView(LoginRequiredMixin, CreateView):
+    model = Animal
+    form_class = AnimalForm
+    template_name = 'pecuaria/animal_form.html'
+    success_url = reverse_lazy('animal_list') # Redireciona para a lista após salvar
+
+
+class AnimalUpdateView(LoginRequiredMixin, UpdateView):
+    model = Animal
+    form_class = AnimalForm
+    template_name = 'pecuaria/animal_form.html'
+    success_url = reverse_lazy('animal_list')
+
+
+class AnimalPesagemCreateView(LoginRequiredMixin, CreateView):
+    model = Pesagem
+    form_class = AnimalPesagemForm
+    template_name = 'pecuaria/animal_form.html'
+
+    def form_valid(self, form):
+        # Associa a pesagem ao animal correto
+        animal_id = self.kwargs['animal_id']
+        animal = get_object_or_404(Animal, pk=animal_id)
+        form.instance.animal = animal
+        return super().form_valid(form) 
+    
+    def get_success_url(self):
+        animal_id = self.kwargs['animal_id']
+        return reverse_lazy('animal_detail', kwargs={'pk': animal_id})
+
+
+class AnimalTratamentoCreateView(LoginRequiredMixin, CreateView):
+    model = TratamentoSaude
+    form_class = AnimalTratamentoForm
+    template_name = 'pecuaria/animal_form.html'
+
+    def form_valid(self, form):
+        # Captura o animal pelo ID passado na URL
+        animal = get_object_or_404(Animal, pk=self.kwargs['animal_id'])
+        # Associa o animal ao tratamento sem que o utilizador precise de o escolher
+        form.instance.animal = animal
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        # Após salvar, volta para o detalhe do animal
+        return reverse_lazy('animal_detail', kwargs={'pk': self.kwargs['animal_id']})
+
+
+class AnimalReproducaoCreateView(LoginRequiredMixin, CreateView):
+    model = Reproducao
+    form_class = AnimalReproducaoForm
+    template_name = 'pecuaria/animal_form.html'
+
+    def form_valid(self, form):
+        # Captura o animal pelo ID passado na URL
+        animal = get_object_or_404(Animal, pk=self.kwargs['animal_id'])
+        # Associa o animal ao tratamento sem que o utilizador precise de o escolher
+        form.instance.animal = animal
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        # Após salvar, volta para o detalhe do animal
+        return reverse_lazy('animal_detail', kwargs={'pk': self.kwargs['animal_id']})
+
 
 
 @login_required(login_url='login')
@@ -790,6 +872,8 @@ class TratamentoSaudeListView(LoginRequiredMixin, ListView):
     ordering = ['-data_tratamento']
 
 
+
+
 # ---  MANEJO REPRODUTIVO ---
 class ReproducaoListView(LoginRequiredMixin, ListView):
     model = Reproducao
@@ -807,22 +891,18 @@ class PesagemListView(ListView):
     ordering = ['-data_pesagem'] 
 
 
-# Função para calcular o GPMD de um animal (baseado no ciclo de pesagens)
-def calcular_gpmd_animal(animal):
-    pesagens = animal.pesagem_set.all().order_by('data_pesagem')
-    
-    if pesagens.count() < 2:
-        return None # GPMD não pode ser calculado com menos de 2 pesagens
+class PesagemCreateView(LoginRequiredMixin, CreateView):
+    model = Pesagem
+    form_class = PesagemForm
+    template_name = 'pecuaria/pesagem_form.html'
+    success_url = reverse_lazy('controle_peso_list')
 
-    primeira = pesagens.first()
-    ultima = pesagens.last()
-
-    peso_total_ganho = ultima.peso_kg - primeira.peso_kg
-    dias = (ultima.data_pesagem - primeira.data_pesagem).days
     
-    if dias > 0:
-        return peso_total_ganho / Decimal(dias)
-    return None
+class PesagemUpdateView(LoginRequiredMixin, UpdateView):
+    model = Pesagem
+    form_class = PesagemForm
+    template_name = 'pecuaria/pesagem_form.html'
+    success_url = reverse_lazy('controle_peso_list')
 
 
 class AnaliseDesempenhoLotesCBV(TemplateView):
@@ -843,7 +923,7 @@ class AnaliseDesempenhoLotesCBV(TemplateView):
             
             # 2. Calcular o GPMD Médio individualmente (em Python)
             for animal in animais_no_lote:
-                gpmd_animal = calcular_gpmd_animal(animal)
+                gpmd_animal = animal.calcular_gpmd_animal()
                 if gpmd_animal is not None:
                     gpmds_dos_animais.append(gpmd_animal)
             
