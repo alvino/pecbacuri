@@ -364,6 +364,8 @@ class Animal(models.Model):
     class Meta:
         verbose_name = "Animal"
         verbose_name_plural = "Animais"
+        ordering = ['identificacao']
+
 
 
 class BaixaAnimal(models.Model):
@@ -584,7 +586,7 @@ class Reproducao(models.Model):
             ('IATF', 'Inseminação Artificial em Tempo Fixo (IATF)'),
             ('MONTA', 'Monta Natural')
         ],
-        default='IA',
+        default='IATF',
         verbose_name="Tipo de Manejo"
     )
 

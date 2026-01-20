@@ -831,7 +831,7 @@ class AnalisePorIdadeView(TemplateView):
 
         # --- 3. Análise Geral (começa após 9 meses) ---
         analise_geral = []
-        limite_anterior = 9 # Continua de onde os bezerros pararam
+        limite_anterior = 0 # Continua de onde os bezerros pararam
 
         for limite_meses, nome_categoria in IDADE_CATEGORIAS:
             

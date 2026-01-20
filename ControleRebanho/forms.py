@@ -83,7 +83,7 @@ class AnimalForm(forms.ModelForm):
             'identificacao': forms.TextInput(attrs={'class': 'form-control'}),
             'nome': forms.TextInput(attrs={'class': 'form-control'}),   
             'sexo': forms.Select(attrs={'class': 'form-select'}),
-            'data_nascimento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'data_nascimento': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'lote_atual': forms.Select(attrs={'class': 'form-select'}),
             'pasto_atual': forms.Select(attrs={'class': 'form-select'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
