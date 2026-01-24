@@ -104,6 +104,8 @@
             <hr>
             
             <h3>Histórico de Pastagem</h3>
+            <a href="{% url 'movimentar_animais' %}?animal_id={{ animal.id }}" class="btn btn-sm btn-warning float-home">Movimentar Animal</a>
+
             <table class="table table-striped table-sm">
                 <thead class="table-light">
                     <tr>
@@ -178,8 +180,8 @@
                     {% for tratamento in tratamentos %}
                     <tr>
                         <td>{{ tratamento.data_tratamento }}</td>
-                        <td>{{ tratamento.get_tipo_display }}</td>
-                        <td>{{ tratamento.medicamento }}</td>
+                        <td>{{ tratamento.get_tipo_tratamento_display }}</td>
+                        <td>{{ tratamento.produto }} - {{ tratamento.dose }}</td>
                         <td>R$ {{ tratamento.custo_estimado|floatformat:2 }}</td>
                     </tr>
                     {% empty %}
@@ -207,9 +209,13 @@
                 <tbody>
                     {% for repro in reproducoes %}
                     <tr>
-                        <td>{{ repro.data_cobertura }}</td>
+                        <td>{{ repro.data_cio }}</td>
                         <td>{{ repro.get_tipo_display }}</td>
+                        {% if repro.touro.pk %}
                         <td><a href="{% url 'animal_detail' pk=repro.touro.pk %}">{{ repro.touro.identificacao }}</a></td>
+                        {% else %}
+                        <td>{{ repro.codigo_semen }}</td>
+                        {% endif %}
                         <td>{{ repro.get_resultado_display|default:"Em Andamento" }}</td>
                         <td>{{ repro.data_parto_prevista|default:"-" }}</td>
                     </tr>

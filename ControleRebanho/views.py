@@ -3,7 +3,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib import messages, auth
-from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, FormView
 from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Avg, F, Q, Count, Sum, Count, Case, When, IntegerField, ExpressionWrapper, FloatField
@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from .serializers import AnimalSerializer 
 from .filters import AnimalFilter
 from .models import Animal, TratamentoSaude, Reproducao, Pesagem, Lote, Pasto, RegistroDeCusto, CustoAnimalDetalhe, TarefaManejo, Venda, Abate, BaixaAnimal
-from .forms import AnimalForm, AnimalTratamentoForm, AnimalReproducaoForm, PastoForm, PesagemForm, AnimalPesagemForm
+from .forms import AnimalForm, AnimalTratamentoForm, AnimalReproducaoForm, PastoForm, PesagemForm, AnimalPesagemForm, MovimentacaoPastoForm
 
 # -----------------------------------------------
 # API - Módulo Básico de Rebanho
@@ -52,6 +52,47 @@ class AnimalViewSet(viewsets.ModelViewSet):
             'total_animais': total_animais,
             'por_pasto': resumo_por_pasto
         })
+
+
+class MovimentacaoPastoView(FormView):
+    template_name = 'pecuaria/movimentacao_pasto.html'
+    form_class = MovimentacaoPastoForm
+    success_url = reverse_lazy('lista_animais')
+
+    def get_initial(self):
+        """Preenche o formulário se um ID de animal for passado via URL"""
+        initial = super().get_initial()
+        animal_id = self.request.GET.get('animal_id')
+        if animal_id:
+            initial['animais'] = [animal_id]
+        return initial
+
+    def form_valid(self, form):
+        """Executa a movimentação no banco de dados"""
+        pasto_destino = form.cleaned_data['pasto_destino']
+        data_entrada = form.cleaned_data['data_entrada']  
+        observacoes = form.cleaned_data['observacoes']    
+        animais = form.cleaned_data['animais']
+        
+        # O método update() é eficiente para 1 ou 100 animais
+        quantidade = 0
+        for animal in animais:
+            # Cria o registro de movimentação
+            animal.movimentacoes_pasto.create(
+                pasto_destino=pasto_destino,
+                data_entrada=data_entrada,
+                observacoes=observacoes
+            )
+            # Atualiza o pasto atual do animal
+            animal.pasto_atual = pasto_destino
+            animal.save()
+            quantidade += 1 
+        
+        messages.success(
+            self.request, 
+            f"Sucesso! {quantidade} animal(is) movido(s) para {pasto_destino.nome}."
+        )
+        return super().form_valid(form)
 
 
 class AlertaRiscoListView(ListView):
@@ -531,13 +572,13 @@ class AnimalDetailView(LoginRequiredMixin, DetailView):
 
         # --- 5. Histórico de Reprodução (Se existir o modelo) ---
         try:
-            context['reproducoes'] = animal.reproducoes.all().order_by('-data_cobertura')
+            context['reproducoes'] = animal.reproducoes_matriz.all().order_by('-data_cio')
         except:
              context['reproducoes'] = []
 
         # --- 6. Histórico de Saúde (Se existir o modelo) ---
         try:
-             context['tratamentos'] = animal.tratamentos_saude.all().order_by('-data_tratamento')
+             context['tratamentos'] = animal.tratamentos.all().order_by('-data_tratamento')
         except:
              context['tratamentos'] = []
 

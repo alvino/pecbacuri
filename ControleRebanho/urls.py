@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import DashboardFinanceiroCBV, AnaliseDesempenhoLotesCBV, AlertaRiscoListView, AnimalViewSet, AnalisePorIdadeView, DashboardView, AnimalCreateView, AnimalUpdateView, PesagemCreateView, PastoListView, PastoDetailView, PastoCreateView, PastoUpdateView, AnimalListView, AnimalDetailView, PesagemListView, ReproducaoListView, TratamentoSaudeListView, AnimalTratamentoCreateView, AnimalReproducaoCreateView, AnimalPesagemCreateView, PesagemUpdateView
+from .views import DashboardFinanceiroCBV, AnaliseDesempenhoLotesCBV, AlertaRiscoListView, AnimalViewSet, AnalisePorIdadeView, DashboardView, AnimalCreateView, AnimalUpdateView, PesagemCreateView, PastoListView, PastoDetailView, PastoCreateView, PastoUpdateView, AnimalListView, AnimalDetailView, PesagemListView, ReproducaoListView, TratamentoSaudeListView, AnimalTratamentoCreateView, AnimalReproducaoCreateView, AnimalPesagemCreateView, PesagemUpdateView, MovimentacaoPastoView
 from rest_framework.routers import DefaultRouter
 
 
@@ -37,6 +37,7 @@ urlpatterns = [
     path('analise_lotes/', AnaliseDesempenhoLotesCBV.as_view(), name='analise_lotes'),
     path('analise_idade_sexo_lotes/', views.analise_idade_sexo_lotes, name='analise_idade_sexo_lotes'),
     path('logout/', views.logout, name='logout'),
+    path('animais/movimentar/', MovimentacaoPastoView.as_view(), name='movimentar_animais'),
 
     # Rotas da API (JSON)
     # Tudo em http://127.0.0.1:8000/api/v1/

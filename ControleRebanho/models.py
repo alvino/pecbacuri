@@ -2,6 +2,7 @@ from django.db import models
 from django.urls import reverse
 from datetime import date, timedelta 
 from django.db.models import Q 
+from django.db.models.functions import Length
 from django.utils import timezone 
 from decimal import Decimal
 
@@ -205,6 +206,14 @@ class Lote(models.Model):
         verbose_name_plural = "Lotes de Manejo"
 
 
+class AnimalManager(models.Manager):
+    def get_queryset(self):
+        # Toda busca agora terá essa anotação e ordenação por padrão
+        return super().get_queryset().annotate(
+            tamanho_id=Length('identificacao')
+        ).order_by('tamanho_id', 'identificacao')
+    
+
 class Animal(models.Model):
     SITUACAO_CHOICES = (
         ('VIVO', 'Vivo'),
@@ -249,9 +258,11 @@ class Animal(models.Model):
         related_name='animais_atuais',
         verbose_name="Pasto Atual"
     )
+
+    objects = AnimalManager()  # Usa o gerenciador customizado
     
     def __str__(self):
-        return self.identificacao
+        return f"{self.identificacao} {self.nome if self.nome else ''}"
 
     @property
     def idade_meses(self):
@@ -364,7 +375,7 @@ class Animal(models.Model):
     class Meta:
         verbose_name = "Animal"
         verbose_name_plural = "Animais"
-        ordering = ['identificacao']
+
 
 
 
