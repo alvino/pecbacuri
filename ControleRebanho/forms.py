@@ -39,6 +39,7 @@ class PesagemForm(forms.ModelForm):
     class Meta:
         model = Pesagem
         fields = ['animal', 'data_pesagem', 'peso_kg', 'evento']
+        initial = {'data_pesagem': timezone.localdate()}
         widgets = {
             'animal': forms.Select(attrs={'class': 'form-select'}),
             'data_pesagem': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
@@ -86,6 +87,7 @@ class AnimalPesagemForm(forms.ModelForm):
     class Meta:
         model = Pesagem
         fields = [ 'data_pesagem', 'peso_kg', 'evento']
+        initial = {'data_pesagem': timezone.localdate()}
         widgets = {
             'data_pesagem': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'peso_kg': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
@@ -99,7 +101,7 @@ class AnimalTratamentoForm(forms.ModelForm):
     class Meta:
         model = TratamentoSaude
         fields = ['data_tratamento', 'tipo_tratamento', 'produto', 'dose', 'descricao', 'data_proximo_tratamento']
-    
+        initial = {'data_tratamento': timezone.localdate()}
         widgets = {
             'data_tratamento': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'tipo_tratamento': forms.Select(attrs={'class': 'form-select'}),
@@ -114,8 +116,9 @@ class AnimalReproducaoForm(forms.ModelForm):
     class Meta:
         model = Reproducao
         fields = ['data_cio', 'tipo', 'touro', 'codigo_semen', 'data_dg', 'resultado', 'bezerro', 'data_parto_prevista']
+        initial = {'data_cio': timezone.localdate(), 'data_dg': timezone.localdate()}
         widgets = {
-            'data_cio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'data_cio': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
             'touro': forms.TextInput(attrs={'class': 'form-control'}),
             'codigo_semen': forms.TextInput(attrs={'class': 'form-control'}),
@@ -130,7 +133,7 @@ class AnimalForm(forms.ModelForm):
     class Meta:
         model = Animal
         fields = ['identificacao','nome','sexo','data_nascimento','lote_atual', 'pasto_atual','observacoes']
-        # Adiciona classes do Bootstrap para todos os campos
+        initial = {'data_nascimento': timezone.localdate()}
         widgets = {
             'identificacao': forms.TextInput(attrs={'class': 'form-control'}),
             'nome': forms.TextInput(attrs={'class': 'form-control'}),   

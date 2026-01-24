@@ -57,10 +57,18 @@ class AnimalViewSet(viewsets.ModelViewSet):
 class MovimentacaoPastoView(FormView):
     template_name = 'pecuaria/movimentacao_pasto.html'
     form_class = MovimentacaoPastoForm
-    success_url = reverse_lazy('lista_animais')
+    success_url = reverse_lazy('animal_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        animal_id = self.request.GET.get('animal_id')
+        
+        if animal_id:
+            # Busca o animal específico para mostrar no template
+            context['animal_individual'] = get_object_or_404(Animal, pk=animal_id)
+        return context
 
     def get_initial(self):
-        """Preenche o formulário se um ID de animal for passado via URL"""
         initial = super().get_initial()
         animal_id = self.request.GET.get('animal_id')
         if animal_id:
@@ -81,7 +89,7 @@ class MovimentacaoPastoView(FormView):
             animal.movimentacoes_pasto.create(
                 pasto_destino=pasto_destino,
                 data_entrada=data_entrada,
-                observacoes=observacoes
+                motivo=observacoes
             )
             # Atualiza o pasto atual do animal
             animal.pasto_atual = pasto_destino
@@ -503,7 +511,7 @@ class AnimalListView(ListView):
     template_name = 'pecuaria/animal_list.html'
     context_object_name = 'animais'
     # Filtra apenas os animais ativos por padrão
-    queryset = Animal.objects.filter(situacao='VIVO').order_by('identificacao')
+    queryset = Animal.objects.filter(situacao='VIVO')
     paginate_by = 25 # Opção para paginar os resultados
     
     def get_queryset(self):

@@ -59,8 +59,7 @@
             <th>Nascimento</th>
             <th>Idade</th>
             <th>Mãe</th>
-            <th>Manejo</th>
-            <th>Últ. Peso (Kg)</th>
+            
             <th>Detalhes</th>
         </tr>
     </thead>
@@ -88,12 +87,7 @@
                 -
                 {% endif %}
             </td>
-            <td>{{ animal.tipo_manejo|default:"N/A" }}</td>
-            <td>
-                {% with latest_pesagem=animal.pesagens.last %}
-                {{ latest_pesagem.peso_kg|default:"-" }}
-                {% endwith %}
-            </td>
+            
             <td>
                 <a href="{% url 'animal_detail' pk=animal.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a>
             </td>
