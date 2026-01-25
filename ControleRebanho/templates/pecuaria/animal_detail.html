@@ -163,7 +163,7 @@
         <div class="tab-pane fade" id="saude-pane" role="tabpanel" aria-labelledby="saude-tab" tabindex="0">
             <h3>Histórico de Saúde e Tratamentos</h3>
 
-             <a href="{% url 'tratamento_create' animal.id %}" class="btn btn-primary">
+             <a href="{% url 'tratamento_create'%}?animal_id={{ animal.id }}" class="btn btn-primary">
                 <i class="bi bi-capsule"></i> Registar Tratamento
             </a>
             
@@ -173,7 +173,7 @@
                         <th>Data</th>
                         <th>Tipo</th>
                         <th>Medicamento</th>
-                        <th>Custo Estimado</th>
+                        
                     </tr>
                 </thead>
                 <tbody>
@@ -182,7 +182,7 @@
                         <td>{{ tratamento.data_tratamento }}</td>
                         <td>{{ tratamento.get_tipo_tratamento_display }}</td>
                         <td>{{ tratamento.produto }} - {{ tratamento.dose }}</td>
-                        <td>R$ {{ tratamento.custo_estimado|floatformat:2 }}</td>
+                       
                     </tr>
                     {% empty %}
                     <tr><td colspan="4">Nenhum tratamento de saúde registrado.</td></tr>

@@ -1,7 +1,7 @@
 # ControleRebanho/views.py
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages, auth
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, FormView
 from django.contrib.auth.decorators import login_required # Importe o decorador
@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from .serializers import AnimalSerializer 
 from .filters import AnimalFilter
 from .models import Animal, TratamentoSaude, Reproducao, Pesagem, Lote, Pasto, RegistroDeCusto, CustoAnimalDetalhe, TarefaManejo, Venda, Abate, BaixaAnimal
-from .forms import AnimalForm, AnimalTratamentoForm, AnimalReproducaoForm, PastoForm, PesagemForm, AnimalPesagemForm, MovimentacaoPastoForm
+from .forms import AnimalForm, TratamentoForm, AnimalReproducaoForm, PastoForm, PesagemForm, AnimalPesagemForm, MovimentacaoPastoForm
 
 # -----------------------------------------------
 # API - Módulo Básico de Rebanho
@@ -54,10 +54,73 @@ class AnimalViewSet(viewsets.ModelViewSet):
         })
 
 
+# --------------------------------
+# FormViews do projeto de Pecuária
+# --------------------------------
+
+
+class TratamentoCreateView(FormView):
+    model = TratamentoSaude
+    form_class = TratamentoForm
+    template_name = 'pecuaria/tratamento_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        animal_id = self.request.GET.get('animal_id')
+        if animal_id:
+            # Busca o animal específico para mostrar no template
+            context['animal_individual'] = get_object_or_404(Animal, pk=animal_id)
+        return context
+
+    def get_initial(self):
+        initial = super().get_initial()
+        animal_id = self.request.GET.get('animal_id')
+        if animal_id:
+            initial['animais'] = [animal_id]
+        initial['data_tratamento'] = timezone.localdate()
+        return initial
+
+    def form_valid(self, form):
+        """Executa a movimentação no banco de dados"""
+        data_tratamento = form.cleaned_data['data_tratamento']
+        tipo_tratamento = form.cleaned_data['tipo_tratamento']
+        produto = form.cleaned_data['produto']
+        dose = form.cleaned_data['dose']
+        descricao = form.cleaned_data['descricao']
+        data_proximo_tratamento = form.cleaned_data['data_proximo_tratamento']   
+        animais = form.cleaned_data['animais']
+        
+        # O método update() é eficiente para 1 ou 100 animais
+        quantidade = 0
+        for animal in animais:
+            # Cria o registro de movimentação
+            animal.tratamentos.create(
+                data_tratamento=data_tratamento,
+                tipo_tratamento=tipo_tratamento,
+                produto=produto,
+                dose=dose,
+                descricao=descricao,
+                data_proximo_tratamento=data_proximo_tratamento
+            )
+            animal.save()
+            quantidade += 1 
+        
+        messages.success(
+            self.request, 
+            f"Sucesso! {quantidade} animal(is) {tipo_tratamento} {produto}."
+        )
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        animal_id = self.request.GET.get('animal_id')
+        if animal_id:
+            return reverse('animal_detail', kwargs={'pk': animal_id})
+        return reverse('tratamentos_saude_list')
+
+
 class MovimentacaoPastoView(FormView):
     template_name = 'pecuaria/movimentacao_pasto.html'
     form_class = MovimentacaoPastoForm
-    success_url = reverse_lazy('animal_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -101,6 +164,12 @@ class MovimentacaoPastoView(FormView):
             f"Sucesso! {quantidade} animal(is) movido(s) para {pasto_destino.nome}."
         )
         return super().form_valid(form)
+    
+    def get_success_url(self):
+        animal_id = self.request.GET.get('animal_id')
+        if animal_id:
+            return reverse('animal_detail', kwargs={'pk': animal_id})
+        return reverse('movimentar_animais')
 
 
 class AlertaRiscoListView(ListView):
@@ -512,7 +581,7 @@ class AnimalListView(ListView):
     context_object_name = 'animais'
     # Filtra apenas os animais ativos por padrão
     queryset = Animal.objects.filter(situacao='VIVO')
-    paginate_by = 25 # Opção para paginar os resultados
+    paginate_by = 50 # Opção para paginar os resultados
     
     def get_queryset(self):
         # 1. Obtém o queryset base (todos os animais)
@@ -661,27 +730,11 @@ class AnimalPesagemCreateView(LoginRequiredMixin, CreateView):
         return reverse_lazy('animal_detail', kwargs={'pk': animal_id})
 
 
-class AnimalTratamentoCreateView(LoginRequiredMixin, CreateView):
-    model = TratamentoSaude
-    form_class = AnimalTratamentoForm
-    template_name = 'pecuaria/animal_form.html'
 
-    def form_valid(self, form):
-        # Captura o animal pelo ID passado na URL
-        animal = get_object_or_404(Animal, pk=self.kwargs['animal_id'])
-        # Associa o animal ao tratamento sem que o utilizador precise de o escolher
-        form.instance.animal = animal
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        # Após salvar, volta para o detalhe do animal
-        return reverse_lazy('animal_detail', kwargs={'pk': self.kwargs['animal_id']})
-
-
-class AnimalReproducaoCreateView(LoginRequiredMixin, CreateView):
+class ReproducaoCreateView(LoginRequiredMixin, CreateView):
     model = Reproducao
     form_class = AnimalReproducaoForm
-    template_name = 'pecuaria/animal_form.html'
+    template_name = 'pecuaria/reproducao_form.html'
 
     def form_valid(self, form):
         # Captura o animal pelo ID passado na URL

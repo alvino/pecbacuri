@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import DashboardFinanceiroCBV, AnaliseDesempenhoLotesCBV, AlertaRiscoListView, AnimalViewSet, AnalisePorIdadeView, DashboardView, AnimalCreateView, AnimalUpdateView, PesagemCreateView, PastoListView, PastoDetailView, PastoCreateView, PastoUpdateView, AnimalListView, AnimalDetailView, PesagemListView, ReproducaoListView, TratamentoSaudeListView, AnimalTratamentoCreateView, AnimalReproducaoCreateView, AnimalPesagemCreateView, PesagemUpdateView, MovimentacaoPastoView
+from .views import DashboardFinanceiroCBV, AnaliseDesempenhoLotesCBV, AlertaRiscoListView, AnimalViewSet, AnalisePorIdadeView, DashboardView, AnimalCreateView, AnimalUpdateView, PesagemCreateView, PastoListView, PastoDetailView, PastoCreateView, PastoUpdateView, AnimalListView, AnimalDetailView, PesagemListView, ReproducaoListView, TratamentoSaudeListView, TratamentoCreateView, ReproducaoCreateView, AnimalPesagemCreateView, PesagemUpdateView, MovimentacaoPastoView
 from rest_framework.routers import DefaultRouter
 
 
@@ -24,12 +24,12 @@ urlpatterns = [
     path('animal/<int:pk>/', AnimalDetailView.as_view(), name='animal_detail'), 
     path('animal/novo/', AnimalCreateView.as_view(), name='animal_create'),
     path('animal/<int:pk>/editar/', AnimalUpdateView.as_view(), name='animal_update'),
-    path('animal/<int:animal_id>/novo-tratamento/', AnimalTratamentoCreateView.as_view(),name='tratamento_create'),
-    path('animal/<int:animal_id>/nova-reproducao/', AnimalReproducaoCreateView.as_view(),name='reproducao_create'),
+    path('animal/<int:animal_id>/nova-reproducao/', ReproducaoCreateView.as_view(),name='reproducao_create'),
     path('animal/<int:animal_id>/nova-pesagem/', AnimalPesagemCreateView.as_view(), name='animal_pesagem_create'),
     path('', DashboardView.as_view(), name='dashboard'),
     path('home', DashboardView.as_view(), name='home'),
     path('tratamentos', TratamentoSaudeListView.as_view(), name='tratamentos_saude_list'),
+    path('tratamentos/novo-tratamento/', TratamentoCreateView.as_view(),name='tratamento_create'),
     path('reproducao', ReproducaoListView.as_view(), name='manejo_reprodutivo_list'),
     path('controle_peso/', PesagemListView.as_view(), name='controle_peso_list'),
     path('controle_peso/nova-pesagem/', PesagemCreateView.as_view(), name='pesagem_create'),

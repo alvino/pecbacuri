@@ -53,7 +53,6 @@ class PastoForm(forms.ModelForm):
         queryset=Animal.objects.filter(situacao='VIVO'),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'animal-checkbox'}),
         label="Selecione os animais",
-        required=False,
     )
     class Meta:
         model = Pasto
@@ -66,21 +65,6 @@ class PastoForm(forms.ModelForm):
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'animais': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
         }
-
-
-class SelecaoAnimalForm(forms.Form):
-    # Para selecionar múltiplos animais com checkboxes
-    animais = forms.ModelMultipleChoiceField(
-        queryset=Animal.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
-        label="Selecione os animais"
-    )
-
-
-class VinculoAnimalForm(forms.ModelForm):
-    class Meta:
-        model = Animal
-        fields = ['nome'] # Adicione os campos necessários
 
 
 class AnimalPesagemForm(forms.ModelForm):
@@ -97,11 +81,15 @@ class AnimalPesagemForm(forms.ModelForm):
 
 
 
-class AnimalTratamentoForm(forms.ModelForm):
+class TratamentoForm(forms.ModelForm):
+    animais = forms.ModelMultipleChoiceField(
+        queryset=Animal.objects.filter(situacao='VIVO'),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'animal-checkbox'}),
+        label="Selecione os animais",
+    )
     class Meta:
         model = TratamentoSaude
         fields = ['data_tratamento', 'tipo_tratamento', 'produto', 'dose', 'descricao', 'data_proximo_tratamento']
-        initial = {'data_tratamento': timezone.localdate()}
         widgets = {
             'data_tratamento': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'tipo_tratamento': forms.Select(attrs={'class': 'form-select'}),
@@ -109,6 +97,7 @@ class AnimalTratamentoForm(forms.ModelForm):
             'dose': forms.TextInput(attrs={'class': 'form-control'}),
             'data_proximo_tratamento': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'animais': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
         }
 
 
