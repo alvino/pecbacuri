@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import DashboardFinanceiroCBV, AnaliseDesempenhoLotesCBV, AlertaRiscoListView, AnimalViewSet, AnalisePorIdadeView, DashboardView, AnimalCreateView, AnimalUpdateView, PesagemCreateView, PastoListView, PastoDetailView, PastoCreateView, PastoUpdateView, AnimalListView, AnimalDetailView, PesagemListView, ReproducaoListView, TratamentoSaudeListView, TratamentoCreateView, ReproducaoCreateView, AnimalPesagemCreateView, PesagemUpdateView, MovimentacaoPastoView
+from .views import DashboardFinanceiroCBV, AnaliseDesempenhoLotesCBV, AlertaRiscoListView, AnimalViewSet, AnalisePorIdadeView, DashboardView, AnimalCreateView, AnimalUpdateView, PesagemCreateView, PastoListView, PastoDetailView, PastoCreateView, PastoUpdateView, AnimalListView, AnimalDetailView, PesagemListView, ReproducaoListView, TratamentoSaudeListView, TratamentoCreateView, ReproducaoCreateView,  PesagemUpdateView, MovimentacaoPastoCreateView
 from rest_framework.routers import DefaultRouter
 
 
@@ -24,20 +24,19 @@ urlpatterns = [
     path('animal/<int:pk>/', AnimalDetailView.as_view(), name='animal_detail'), 
     path('animal/novo/', AnimalCreateView.as_view(), name='animal_create'),
     path('animal/<int:pk>/editar/', AnimalUpdateView.as_view(), name='animal_update'),
-    path('animal/<int:animal_id>/nova-reproducao/', ReproducaoCreateView.as_view(),name='reproducao_create'),
-    path('animal/<int:animal_id>/nova-pesagem/', AnimalPesagemCreateView.as_view(), name='animal_pesagem_create'),
     path('', DashboardView.as_view(), name='dashboard'),
     path('home', DashboardView.as_view(), name='home'),
     path('tratamentos', TratamentoSaudeListView.as_view(), name='tratamentos_saude_list'),
     path('tratamentos/novo-tratamento/', TratamentoCreateView.as_view(),name='tratamento_create'),
     path('reproducao', ReproducaoListView.as_view(), name='manejo_reprodutivo_list'),
+    path('reproducao/nova-reproducao/', ReproducaoCreateView.as_view(),name='reproducao_create'),
     path('controle_peso/', PesagemListView.as_view(), name='controle_peso_list'),
     path('controle_peso/nova-pesagem/', PesagemCreateView.as_view(), name='pesagem_create'),
     path('controle_peso/<int:pk>/editar/', PesagemUpdateView.as_view(), name='pesagem_update'),
     path('analise_lotes/', AnaliseDesempenhoLotesCBV.as_view(), name='analise_lotes'),
     path('analise_idade_sexo_lotes/', views.analise_idade_sexo_lotes, name='analise_idade_sexo_lotes'),
     path('logout/', views.logout, name='logout'),
-    path('animais/movimentar/', MovimentacaoPastoView.as_view(), name='movimentar_animais'),
+    path('animais/movimentar/', MovimentacaoPastoCreateView.as_view(), name='movimentar_animais'),
 
     # Rotas da API (JSON)
     # Tudo em http://127.0.0.1:8000/api/v1/

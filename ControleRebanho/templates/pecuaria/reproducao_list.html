@@ -1,52 +1,108 @@
-{% extends "base.html" %}
-
-{% block title %}Reprodução | Gestão Nelore{% endblock %}
+{% extends 'base.html' %}
 
 {% block content %}
-    <div class="container mt-4">
-        <h1 class="mb-4">Manejo Reprodutivo (DG e Cobertura)</h1>
-        <p class="lead">Registro histórico de inseminações, montas e diagnósticos de gestação.</p>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-calendar-check"></i> Controle Reprodutivo</h2>
+        <span class="badge bg-secondary">{{ page_obj.paginator.count }} registros</span>
+    </div>
+    <a href="{% url 'reproducao_create' %}" class="btn btn-success mb-3">
+        <i class="bi bi-plus-circle"></i> Iniciar Novo Registro
+    </a>
 
-        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary mb-4">← Voltar ao Dashboard</a>
-        <a href="{% url 'admin:ControleRebanho_reproducao_add' %}" class="btn btn-primary mb-4">Adicionar Novo Evento</a>
-
-        <table class="table table-striped table-hover">
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover bg-white mb-0">
             <thead class="table-dark">
                 <tr>
                     <th>Matriz</th>
-                    <th>Cio/Protocolo</th>
-                    <th>Manejo</th>
-                    <th>Touro/Sêmen</th>
-                    <th>Data DG</th>
-                    <th>Resultado</th>
-                    <th>Bezerro Nascido</th>
+                    <th>Data Cio/IA</th>
+                    <th>Tipo</th>
+                    <th>Resultado DG</th>
+                    <th>Previsão Parto</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-                {% for registro in manejo_reprodutivo %}
+                {% for manejo in manejos %}
                 <tr>
-                    <td>{{ registro.matriz.identificacao }}</td>
-                    <td>{{ registro.data_cio|date:"d/m/Y" }}</td>
-                    <td>{{ registro.get_tipo_display }}</td>
                     <td>
-                        {% if registro.touro %}{{ registro.touro.identificacao }}
-                        {% elif registro.codigo_semen %}{{ registro.codigo_semen }}
-                        {% else %}N/A{% endif %}
+                        <a href="{% url 'reproducao_create' %}?animal_id={{ manejo.matriz.id }}"> 
+   
+                            <strong>{{ manejo.matriz.identificacao }}</strong><br>
+                            <small class="text-muted">{{ manejo.matriz.nome|default:"" }}</small>
+                        </a>
                     </td>
-                    <td>{% if registro.data_dg %}{{ registro.data_dg|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    <td>{{ manejo.data_cio|date:"d/m/Y" }}</td>
+                    <td><span class="badge bg-light text-dark">{{ manejo.get_tipo_display }}</span></td>
                     <td>
-                        {% if registro.resultado == 'P' %}<span class="badge bg-success">Prenhe</span>
-                        {% elif registro.resultado == 'V' %}<span class="badge bg-danger">Vazia</span>
-                        {% else %}<span class="badge bg-secondary">Não Verificado</span>{% endif %}
+                        {% if manejo.resultado == 'P' %}
+                            <span class="text-success fw-bold">Prenhe</span>
+                        {% elif manejo.resultado == 'V' %}
+                            <span class="text-danger fw-bold">Vazia</span>
+                        {% else %}
+                            <span class="text-muted">Pendente</span>
+                        {% endif %}
                     </td>
-                    <td>{% if registro.bezerro %}{{ registro.bezerro.identificacao }}{% else %}-{% endif %}</td>
+                    <td>
+                        {{ manejo.data_parto_prevista|date:"d/m/Y"|default:"---" }}
+                    </td>
+                    <td>
+                        {% if manejo.dias_para_parir %}
+                            {% if manejo.dias_para_parir < 30 and manejo.dias_para_parir > 0 %}
+                                <span class="badge bg-warning text-dark">Próxima ({{ manejo.dias_para_parir }} dias)</span>
+                            {% elif manejo.dias_para_parir <= 0 %}
+                                <span class="badge bg-danger">Atrasada/Parto!</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">{{ manejo.dias_para_parir }} dias</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7">Nenhum registro de manejo reprodutivo encontrado.</td>
+                    <td colspan="6" class="text-center py-4 text-muted">Nenhum registro reprodutivo encontrado.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        
     </div>
-   {% endblock %}
+    {% if is_paginated %}
+    <nav aria-label="Navegação de página" class="mt-4">
+        <ul class="pagination justify-content-center">
+            
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1" title="Primeira Página">&laquo; Primeira</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo; Primeira</span></li>
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" title="Última Página">Última &raquo;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+                <li class="page-item disabled"><span class="page-link">Última &raquo;</span></li>
+            {% endif %}
+
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -265,12 +265,35 @@ class Animal(models.Model):
         return f"{self.identificacao} {self.nome if self.nome else ''}"
 
     @property
-    def idade_meses(self):
+    def total_meses(self):
         if self.data_nascimento:
             hoje = date.today()
             idade_anos = hoje.year - self.data_nascimento.year
-            idade_meses = (hoje.month - self.data_nascimento.month) + (idade_anos * 12)
-            return idade_meses
+            idade_meses = (hoje.month - self.data_nascimento.month)
+            if hoje.day < self.data_nascimento.day:
+                idade_meses -= 1
+            if idade_meses < 0:
+                idade_anos -= 1
+                idade_meses += 12
+
+            total_meses = idade_anos * 12 + idade_meses
+            return total_meses
+        else:
+            return 0
+        
+    @property
+    def idade_ano_mes(self):
+        if self.data_nascimento:
+            hoje = date.today()
+            idade_anos = hoje.year - self.data_nascimento.year
+            idade_meses = hoje.month - self.data_nascimento.month
+            if hoje.day < self.data_nascimento.day:
+                idade_meses -= 1
+            if idade_meses < 0:
+                idade_anos -= 1
+                idade_meses += 12
+           
+            return f"{idade_anos} ano(s) e {idade_meses} mes(es)"
         else:
             return 0
         
@@ -716,12 +739,10 @@ class Pesagem(models.Model):
         decimal_places=2, 
         verbose_name="Peso (Kg)"
     )
-    
-    # Campo para identificar o evento de pesagem (Ex: Desmama, Anual, Repasse)
     evento = models.CharField(
         max_length=50, 
         blank=True, 
-        verbose_name="Evento (Ex: Desmama, Anual)"
+        verbose_name="Evento (Ex: Desmama, Anual, Repasse)"
     )
 
     def __str__(self):

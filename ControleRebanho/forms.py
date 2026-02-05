@@ -15,7 +15,7 @@ class MovimentacaoPastoForm(forms.Form):
     )
 
     data_entrada = forms.DateField(
-        widget=forms.DateInput(format='%Y-%m-%d',attrs={'type': 'date', 'class': 'form-control mb-4'}),
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control mb-4'}),
         label="Data do Manejo",
         initial=timezone.localdate   
     )
@@ -31,29 +31,9 @@ class MovimentacaoPastoForm(forms.Form):
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'animal-checkbox'}),
         label="Selecione os Animais para Mover"
     )
-    
-    
-
-
-class PesagemForm(forms.ModelForm):
-    class Meta:
-        model = Pesagem
-        fields = ['animal', 'data_pesagem', 'peso_kg', 'evento']
-        initial = {'data_pesagem': timezone.localdate()}
-        widgets = {
-            'animal': forms.Select(attrs={'class': 'form-select'}),
-            'data_pesagem': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
-            'peso_kg': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'evento': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
 
 
 class PastoForm(forms.ModelForm):
-    animais = forms.ModelMultipleChoiceField(
-        queryset=Animal.objects.filter(situacao='VIVO'),
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'animal-checkbox'}),
-        label="Selecione os animais",
-    )
     class Meta:
         model = Pasto
         fields = ['nome', 'area_hectares', 'tipo_capim','capacidade_maxima_ua','observacoes']
@@ -62,23 +42,42 @@ class PastoForm(forms.ModelForm):
             'area_hectares': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'tipo_capim': forms.TextInput(attrs={'class': 'form-control'}),
             'capacidade_maxima_ua': forms.NumberInput(attrs={'class': 'form-control'}),
-            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'animais': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),           
         }
 
 
-class AnimalPesagemForm(forms.ModelForm):
+class PesagemForm(forms.Form):
+    data_pesagem = forms.DateField(
+        label="Data da Pesagem",
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'})
+    )
+    peso_kg = forms.DecimalField(
+        max_digits=7, 
+        decimal_places=2,
+        label="Peso (kg)",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'})
+    )
+    evento = forms.CharField(
+        label="Observações/Evento",
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
+    )
+    animais = forms.ModelMultipleChoiceField(
+        queryset=Animal.objects.filter(situacao='VIVO'),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'animal-checkbox'}),
+        label="Selecione os animais",
+    )
+
+class PesagemModelForm(forms.ModelForm):
     class Meta:
         model = Pesagem
-        fields = [ 'data_pesagem', 'peso_kg', 'evento']
+        fields = ['data_pesagem', 'peso_kg', 'evento']
         initial = {'data_pesagem': timezone.localdate()}
         widgets = {
             'data_pesagem': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'peso_kg': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'evento': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
-
-
 
 
 class TratamentoForm(forms.ModelForm):
@@ -97,15 +96,18 @@ class TratamentoForm(forms.ModelForm):
             'dose': forms.TextInput(attrs={'class': 'form-control'}),
             'data_proximo_tratamento': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'animais': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
         }
 
 
-class AnimalReproducaoForm(forms.ModelForm):
+class ReproducaoForm(forms.ModelForm):
+    matriz = forms.ModelMultipleChoiceField(
+        queryset=Animal.objects.filter(situacao='VIVO', sexo='F'),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'animal-checkbox'}),
+        label="Selecione as matrizes",
+    )
     class Meta:
         model = Reproducao
-        fields = ['data_cio', 'tipo', 'touro', 'codigo_semen', 'data_dg', 'resultado', 'bezerro', 'data_parto_prevista']
-        initial = {'data_cio': timezone.localdate(), 'data_dg': timezone.localdate()}
+        fields = ['data_cio', 'tipo', 'touro', 'codigo_semen', 'data_dg', 'resultado']
         widgets = {
             'data_cio': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
@@ -113,8 +115,6 @@ class AnimalReproducaoForm(forms.ModelForm):
             'codigo_semen': forms.TextInput(attrs={'class': 'form-control'}),
             'data_dg': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
             'resultado': forms.Select(attrs={'class': 'form-select'}),
-            'bezerro': forms.TextInput(attrs={'class': 'form-control'}),
-            'data_parto_prevista': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
         }
          
 

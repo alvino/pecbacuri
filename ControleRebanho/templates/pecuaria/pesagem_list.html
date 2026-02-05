@@ -25,7 +25,7 @@
                 <td>{{ registro.data_pesagem|date:"d/m/Y" }}</td>
                 <td>{{ registro.peso_kg }}</td>
                 <td>{{ registro.evento }}</td>
-                <td><a href="{% url 'pesagem_update' registro.pk %}"><i class="bi bi-pencil-fill"></i></a></td> 
+                <td><a href="{% url 'pesagem_update' registro.pk %}">Editar</a></td> 
             </tr>
             {% empty %}
             <tr>
