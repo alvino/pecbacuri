@@ -21,7 +21,7 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
     
                     <li class="nav-item">
-                        <a class="nav-link" aria-current="page" href="{% url 'home' %}">
+                        <a class="nav-link" aria-current="page" href="{% url 'dashboard' %}">
                             <i class="fas fa-home"></i> Início
                         </a>
                     </li>
@@ -42,9 +42,9 @@
                             
                             <li><a class="dropdown-item" href="{% url 'movimentar_animais' %}">
                                 Mover Animais</a></li>
-                            <li><a class="dropdown-item" href="{% url 'admin:ControleRebanho_lote_changelist' %}">
+                            <li><a class="dropdown-item" href="{% url 'admin:rebanho_lote_changelist' %}">
                                 Mover Lote</a></li>
-                            <li><a class="dropdown-item text-danger" href="{% url 'admin:ControleRebanho_baixaanimal_add' %}">
+                            <li><a class="dropdown-item text-danger" href="{% url 'admin:rebanho_baixaanimal_add' %}">
                                 <i class="fas fa-skull-crossbones me-1"></i> Registrar Baixa (Morte)
                             </a></li>
                         </ul>
@@ -64,7 +64,7 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'manejo_reprodutivo_list' %}">Registro Reprodutivo</a></li>
                             <li><a class="dropdown-item" href="{% url 'tratamento_create' %}">Registro de Saúde</a></li>
-                            <li><a class="dropdown-item" href="{% url 'admin:ControleRebanho_tarefamanejo_changelist' %}">Agenda / Tarefas</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:manejo_tarefamanejo_changelist' %}">Agenda / Tarefas</a></li>
                         </ul>
                     </li>
                 
@@ -81,23 +81,20 @@
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
 
-                            <li><a class="dropdown-item" href="{% url 'admin:ControleRebanho_registrodecusto_add' %}">Registrar Novo Custo</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:financeiro_registrodecusto_add' %}">Registrar Novo Custo</a></li>
                             
-                            <li><a class="dropdown-item" href="{% url 'admin:ControleRebanho_despesa_add' %}">
+                            <li><a class="dropdown-item" href="{% url 'admin:financeiro_despesa_add' %}">
                                 <i class="fas fa-funnel-dollar me-1"></i> Registrar Despesa
                             </a></li>
                             
                             <li><hr class="dropdown-divider"></li>
     
                             {# NOVO LINK: REGISTRO DE VENDA #}
-                            <li><a class="dropdown-item" href="{% url 'admin:ControleRebanho_venda_add' %}">
+                            <li><a class="dropdown-item" href="{% url 'admin:financeiro_venda_add' %}">
                                 <i class="fas fa-handshake me-1"></i> Registrar Venda
                             </a></li>
                             
-                            {# NOVO LINK: REGISTRO DE ABATE #}
-                            <li><a class="dropdown-item" href="{% url 'admin:ControleRebanho_abate_add' %}">
-                                <i class="fas fa-cut me-1"></i> Registrar Abate
-                            </a></li>
+                            
                         </ul>
                     </li>
                 

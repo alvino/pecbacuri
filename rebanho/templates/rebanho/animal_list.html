@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}Lista de Animais Ativos - Gestão Nelore{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Rebanho Ativo</h1>
+<p class="lead">Listagem de todos os **{{ total_ativo }}** animais ativos na fazenda.</p>
+
+
+
+<div class="card p-3 mb-4">
+    <form method="get" class="row g-3 align-items-end">
+
+        {% for field in filter.form %}
+        <div class="col-md-auto">
+
+            <label for="{{ field.id_for_label }}" class="form-label">
+                {{ field.label }}
+            </label>
+
+            {{ field|addcss:"form-control" }}
+
+            {% if field.help_text %}
+            <div class="form-text">{{ field.help_text }}</div>
+            {% endif %}
+            {% for error in field.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+        </div>
+
+        <div class="col-md-auto">
+            <a href="{% url 'animal_list' %}" class="btn btn-outline-secondary">
+                Limpar Filtro
+            </a>
+        </div>
+
+        <div class="col-md-auto">
+            <a href="{% url 'animal_create' %}" class="btn btn-success">Adicionar Novo
+                Animal</a>
+        </div>
+
+    </form>
+</div>
+<hr>
+
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Identificação</th>
+            <th>Sexo</th>
+            <th>Nascimento</th>
+            <th>Idade</th>
+            <th>Mãe</th>
+            
+            <th>Detalhes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for animal in animais %}
+        <tr>
+            <td>
+                <a href="{% url 'animal_detail' pk=animal.pk %}">
+                    <strong>{{ animal.identificacao }}</strong>
+                </a>
+            </td>
+            <td>
+                {% if animal.sexo == 'F' %}
+                <span class="badge bg-primary">Fêmea</span>
+                {% else %}
+                <span class="badge bg-info">Macho</span>
+                {% endif %}
+            </td>
+            <td>{{ animal.data_nascimento|date:"d/m/Y" }}</td>
+            <td>{{ animal.data_nascimento|timesince|cut:" ago" }}</td>
+            <td>
+                {% if animal.mae %}
+                <a href="{% url 'animal_detail' pk=animal.mae.pk %}">{{ animal.mae.identificacao }}</a>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+            
+            <td>
+                <a href="{% url 'animal_detail' pk=animal.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8">Nenhum animal ativo encontrado.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% comment %} Adicionando a navegação da paginação (se necessário) {% endcomment %}
+{% if is_paginated %}
+<nav aria-label="Navegação da Lista">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Próximo</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock content %}

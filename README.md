@@ -10,6 +10,48 @@ O **PECBACURI** é um sistema robusto de controle zootécnico e financeiro, dese
 
 O principal objetivo é fornecer ao pecuarista indicadores críticos de desempenho (*KPIs*) e alertas de risco para suportar a tomada de decisão, maximizando a produtividade e a lucratividade do rebanho.
 
+1. App core ou dashboard
+Focado na visão geral do sistema e na página inicial.
+
+DashboardView
+
+logout (lógica de autenticação)
+
+2. App rebanho (O coração do sistema)
+Responsável pelo cadastro de animais e movimentações básicas.
+
+API: AnimalViewSet
+
+Views: AnimalCreateView, AnimalUpdateView, AnimalListView, AnimalDetailView
+
+Análises Simples: AnalisePorIdadeView
+
+3. App manejo
+Tudo o que envolve o dia a dia operacional e saúde.
+
+Saúde: TratamentoCreateView, TratamentoSaudeListView
+
+Peso: PesagemCreateView, PesagemUpdateView, PesagemListView
+
+Reprodução: ReproducaoCreateView, ReproducaoListView
+
+Alertas: alertas_de_manejo, AlertaRiscoListView
+
+4. App infraestrutura ou pastagem
+Focado na gestão física da fazenda.
+
+Pastos: PastoCreateView, PastoUpdateView, PastoListView, PastoDetailView
+
+Logística: MovimentacaoPastoCreateView
+
+Relatórios: relatorio_desempenho_pasto
+
+5. App financeiro
+Tudo o que envolve dinheiro, custos e lucros.
+
+DashboardFinanceiroCBV
+
+Lógicas de cálculo de lucro e custo acumulado.
 ---
 
 ## ✨ Funcionalidades Principais

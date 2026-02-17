@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load humanize %} 
+
+{% block title %}Alertas e Agenda de Manejo{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Alertas e Agenda de Manejo</h1>
+    <p class="lead">Eventos críticos e tarefas agendadas entre hoje ({{ hoje|date:"d/m/Y" }}) e {{ futuro_proximo|date:"d/m/Y" }}.</p>
+
+    <div class="mb-4 text-end">
+        <a href="{% url 'admin:manejo_tarefamanejo_add' %}" class="btn btn-success">
+            + Adicionar Nova Tarefa
+        </a>
+    </div>
+
+    {% if alertas %}
+        <div class="list-group">
+            {% for alerta in alertas %}
+                
+                <div class="list-group-item d-flex justify-content-between align-items-center {{ alerta.status_class }}">
+                    <div class="d-flex align-items-center">
+                        <i class="{{ alerta.icon_class }} me-3 fa-lg"></i>
+                        <div>
+                            <h5 class="mb-1 fw-bold">{{ alerta.titulo }}</h5>
+                            <small class="text-muted">
+                                Tipo: {{ alerta.tipo }}
+                                {% if alerta.animal_link %}
+                                    | Animal: <a href="{{ alerta.animal_link }}" class="alert-link">{{ alerta.animal_identificacao|default:"(N/A)" }}</a>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <span class="d-block fw-bold fs-5">{{ alerta.data|date:"d/m/Y" }}</span>
+                        {% if alerta.dias_restantes == 0 %}
+                            <span class="badge bg-danger">É HOJE!</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ alerta.dias_restantes }} dias restantes</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-success mt-4">
+            Parabéns! Nenhuma tarefa crítica ou parto esperado agendado para os próximos 90 dias.
+        </div>
+    {% endif %}
+
+{% endblock content %}

@@ -37,9 +37,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
-# Application definition
-
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,16 +45,25 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    
-    
+]
+
+THIRD_PARTY_APPS = [
     'widget_tweaks',
     'import_export',
     'rest_framework',
     'django_filters',
-   
-
-    'ControleRebanho',
 ]
+
+LOCAL_APPS = [
+    'rebanho',               # Animais, Abates e Baixas
+    'core',                  # Dashboard e base
+    'manejo',                # Pesagem, Saúde e Reprodução
+    'infraestrutura',        # Pastos
+    'financeiro',            # Vendas, Despesas e Custos
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -70,13 +77,16 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'pecbacuri.urls'
 
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
-        'APP_DIRS': True,
+        # Aqui dizemos ao Django para olhar na pasta 'templates' na raiz do projeto
+        'DIRS': [os.path.join(BASE_DIR, 'templates')], 
+        'APP_DIRS': True, # Isso permite que cada app tenha sua própria pasta /templates/
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -120,15 +130,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'pt-br'
-
 TIME_ZONE = 'America/Sao_Paulo'
-
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -144,6 +150,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles_root'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = "/"
-LOGIN_URL = "login"
-LOGOUT_REDIRECT_URL = "login"
+
+LOGIN_URL = 'login'             # Nome da URL da página de login
+LOGIN_REDIRECT_URL = 'dashboard' # Para onde vai após logar
+LOGOUT_REDIRECT_URL = 'login'    # Para onde vai após sair

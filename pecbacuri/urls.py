@@ -24,6 +24,11 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Incluindo as URLs do seu app no caminho principal
-    path('', include('ControleRebanho.urls')),
-    path('login/', auth_views.LoginView.as_view(template_name='pecuaria/login.html'), name='login'),
+    # Cada app terá seu próprio prefixo na URL
+    path('', include('core.urls')),             # Dashboard e Logout
+    path('rebanho/', include('rebanho.urls')),   # Cadastro de Animais
+    path('manejo/', include('manejo.urls')),     # Pesagem, Saúde, Reprodução
+    path('fazenda/', include('infraestrutura.urls')), # Pastos e Movimentação
+    path('financeiro/', include('financeiro.urls')), # Dashboards de custo/lucro
+    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

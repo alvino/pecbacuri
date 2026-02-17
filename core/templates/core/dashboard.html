@@ -224,10 +224,10 @@
     new Chart(ctxDistribuicao, {
         type: 'bar',
         data: {
-            labels: ['Ativos', 'Vendidos', 'Abatidos'],
+            labels: ['Ativos', 'Vendidos', 'baixa'],
             datasets: [{
                 label: 'Total de Animais',
-                data: [{{ total_animais }}, {{ total_vendido }}, {{ total_abatido }}],
+                data: [{{ total_animais }}, {{ total_vendido }}, {{ total_baixa }}],
         backgroundColor: [
         'rgba(0, 123, 255, 0.8)',  // Azul para Ativo
         'rgba(255, 165, 0, 0.8)', // Laranja para Vendido
