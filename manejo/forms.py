@@ -64,7 +64,7 @@ class TratamentoForm(forms.ModelForm):
         }
 
 
-class ReproducaoForm(forms.ModelForm):
+class ReproducaoSelectMultipleMatrizForm(forms.ModelForm):
     matriz = forms.ModelMultipleChoiceField(
         queryset=Animal.objects.filter(situacao='VIVO', sexo='F'),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'animal-checkbox'}),
@@ -83,3 +83,16 @@ class ReproducaoForm(forms.ModelForm):
             'resultado': forms.Select(attrs={'class': 'form-select'}),
         }
          
+class ReproducaoForm(forms.ModelForm):
+    class Meta:
+        model = Reproducao
+        fields = ['data_cio', 'escore', 'tipo', 'touro', 'codigo_semen', 'data_dg', 'resultado']
+        widgets = {
+            'data_cio': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
+            'escore': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 5, 'step': '0.5'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'touro': forms.TextInput(attrs={'class': 'form-control'}),
+            'codigo_semen': forms.TextInput(attrs={'class': 'form-control'}),
+            'data_dg': forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'}),
+            'resultado': forms.Select(attrs={'class': 'form-select'}),
+        }

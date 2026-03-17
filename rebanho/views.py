@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from .serializers import AnimalSerializer 
 from .filters import AnimalFilter
 from .models import Animal,  Lote,  BaixaAnimal
-from .forms import AnimalForm
+from .forms import AnimalForm, BaixaAnimalForm
 
 # -----------------------------------------------
 # API - Módulo Básico de Rebanho
@@ -88,11 +88,23 @@ class AnimalListView(ListView):
     context_object_name = 'animais'
     # Filtra apenas os animais ativos por padrão
     queryset = Animal.objects.filter(situacao='VIVO')
-    paginate_by = 50 # Opção para paginar os resultados
+    paginate_by = 25 # Opção para paginar os resultados
     
     def get_queryset(self):
         # 1. Obtém o queryset base (todos os animais)
         queryset = super().get_queryset()
+
+        # Captura o parâmetro 'sort' da URL, ex: ?sort=idade_asc
+        sort = self.request.GET.get('sort')
+        
+        if sort == 'idade_asc':
+            # Mais velhos primeiro (Data de nascimento menor/antiga)
+            queryset = queryset.order_by('data_nascimento')
+        elif sort == 'idade_desc':
+            # Mais novos primeiro (Data de nascimento maior/recente)
+            queryset = queryset.order_by('-data_nascimento')
+        else:
+            pass
         
         # 2. Cria o objeto Filter com os dados GET (query string) e o queryset
         self.filter = AnimalFilter(self.request.GET, queryset=queryset)
@@ -404,3 +416,28 @@ class AnaliseDesempenhoLotesCBV(TemplateView):
         
         return context
 
+
+class BaixaAnimalCreateView(LoginRequiredMixin, FormView):
+    template_name = 'rebanho/baixa_animal_form.html'
+    form_class = BaixaAnimalForm
+    success_url = reverse_lazy('dashboard') # Redireciona para o dashboard ou onde preferir após a baixa
+
+    def form_valid(self, form):
+        # Lógica para processar a baixa do animal
+        animal_id = form.cleaned_data['Animal'].id
+        animal = get_object_or_404(Animal, pk=animal_id)
+
+        # Cria o registro de baixa
+        BaixaAnimal.objects.create(
+            animal=animal,
+            data_baixa=form.cleaned_data['data_baixa'],
+            causa=form.cleaned_data['causa'],
+            observacoes=form.cleaned_data['observacoes']
+        )
+
+        # Atualiza a situação do animal para "BAIXADO"
+        animal.situacao = 'BAIXADO'
+        animal.save()
+
+        messages.success(self.request, f'Animal {animal.identificacao} baixado com sucesso.')
+        return super().form_valid(form)

@@ -92,7 +92,7 @@ class RegistroDeCustoAdmin(admin.ModelAdmin):
     def animal_link(self, obj):
         if obj.animal:
             return format_html('<a href="{}">{}</a>',
-                               reverse("admin:ControleRebanho_animal_change", args=[obj.animal.pk]),
+                               reverse("admin:rebanho_animal_change", args=[obj.animal.pk]),
                                obj.animal.identificacao)
         return "-"
     animal_link.short_description = 'Animal'
@@ -100,7 +100,7 @@ class RegistroDeCustoAdmin(admin.ModelAdmin):
     def pasto_link(self, obj):
         if obj.pasto:
             return format_html('<a href="{}">{}</a>',
-                               reverse("admin:ControleRebanho_pasto_change", args=[obj.pasto.pk]),
+                               reverse("admin:infraestrutura_pasto_change", args=[obj.pasto.pk]),
                                obj.pasto.nome)
         return "-"
     pasto_link.short_description = 'Pasto'

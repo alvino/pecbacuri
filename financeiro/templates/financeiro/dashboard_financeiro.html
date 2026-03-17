@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load humanize %} 
+{% load l10n %}
 
 {% block title %}Dashboard Financeiro & Lucratividade{% endblock %}
 
@@ -11,11 +12,13 @@
         <div class="col-md-2">
             <label for="ano" class="form-label">Filtrar Ano</label>
             <select class="form-select" id="ano" name="ano" required>
+                {% localize off %}
                 {% for ano in anos_disponiveis %}
                     <option value="{{ ano }}" {% if ano|stringformat:"s" == ano_filtro %}selected{% endif %}>
                         {{ ano }}
                     </option>
                 {% endfor %}
+                {% endlocalize %}
             </select>
         </div>
         <div class="col-md-1">
@@ -64,9 +67,11 @@
         </div>
     </div>
 
-    <h2 class="mt-5 mb-3">Lucratividade por Animal (Saídos)</h2>
-    
     {% if detalhe_lucratividade %}
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 >Lucratividade por Animal (Saídos)</h3>
+        <span class="badge bg-secondary">{{ detalhe_lucratividade|length }} registros</span>
+    </div>
         <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>

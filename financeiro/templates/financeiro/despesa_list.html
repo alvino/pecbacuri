@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% load humanize %}
+
+{% block title %}Lista de Despesas - PecBacuri{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h1>Financeiro: Despesas</h1>
+    <span class="badge bg-secondary">{{ page_obj.paginator.count }} registros</span>
+</div>
+
+<div class="card p-3 mb-2 shadow-sm">
+    <form method="get" class="row g-3 align-items-end">
+        {% for field in filter.form %}
+        <div class="col-md-auto">
+            <label for="{{ field.id_for_label }}" class="form-label fw-bold">
+                {{ field.label }}
+            </label>
+            {{ field|addcss:"form-control" }}
+        </div>
+        {% endfor %}
+
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+        </div>
+
+        <div class="col-md-auto">
+            <a href="{% url 'despesa_list' %}" class="btn btn-outline-secondary">
+                Limpar
+            </a>
+        </div>
+
+        <div class="col-md-auto">
+            <a href="{% url 'despesa_create' %}" class="btn btn-danger">
+                <i class="bi bi-plus-circle"></i> Nova Despesa
+            </a>
+        </div>
+    </form>
+</div>
+
+<hr>
+
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Valor</th>
+           
+        </tr>
+    </thead>
+    <tbody>
+        {% for despesa in despesas %}
+        <tr class="position-relative">
+            <td>{{ despesa.data_pagamento|date:"d/m/Y" }}</td>
+            <td>
+                <a href="#" class="text-decoration-none fw-bold stretched-link text-dark">
+                    {{ despesa.descricao|truncatechars:30 }}
+                </a>
+            </td>
+            <td><span class="badge border text-dark bg-light">{{ despesa.categoria }}</span></td>
+            <td class="fw-bold text-danger">R$ {{ despesa.valor|floatformat:2|intcomma  }}</td>
+            
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center py-4">Nenhuma despesa encontrada para os filtros aplicados.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% if total_valor %}
+    <tfoot class="table-light">
+        <tr>
+            <td colspan="3" class="text-end fw-bold">Soma das Despesas Filtradas:</td>
+            <td colspan="3" class="fw-bold text-danger text-nowrap">
+                R$ {{ total_valor|floatformat:2|intcomma }}
+            </td>
+        </tr>
+    </tfoot>
+    {% endif %}
+</table>
+
+{% if is_paginated %}
+<nav aria-label="Navegação da Lista">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">Anterior</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Próximo</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock content %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% load humanize %} 
+
+{% block title %}Registro de Custos - PecBacuri{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h1>Registro de Custos</h1>
+    <span class="badge bg-secondary">{{ page_obj.paginator.count }} registros</span>
+</div>
+
+<div class="card p-3 mb-2 shadow-sm">
+    <form method="get" class="row g-3 align-items-end">
+        {% for field in filter.form %}
+        <div class="col-md-auto">
+            <label for="{{ field.id_for_label }}" class="form-label fw-bold small">
+                {{ field.label }}
+            </label>
+            {{ field|addcss:"form-control form-control-sm" }}
+        </div>
+        {% endfor %}
+
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+            <a href="{% url 'custo_list' %}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+            <a class="btn btn-success btn-sm" href="{% url 'despesa_create' %}">Registrar Despesa</a>
+            <a class="btn btn-success btn-sm" href="{% url 'admin:financeiro_registrodecusto_add' %}">Registrar Novo Custo</a>
+        </div>
+    </form>
+</div>
+
+<hr>
+
+<table class="table table-striped table-hover mt-3">
+    <thead class="table-dark">
+        <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th class="text-end">Valor</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for custo in custos %}
+        <tr class="position-relative">
+            <td>{{ custo.data_custo|date:"d/m/Y" }}</td>
+            <td>
+                <a href="#" class="text-decoration-none fw-bold stretched-link text-dark">
+                    {{ custo.descricao }}
+                </a>
+            </td>
+            <td><span class="badge bg-light text-dark border">{{ custo.tipo_custo }}</span></td>
+            <td class="text-end fw-bold text-danger">
+                R$ {{ custo.valor|floatformat:2 }}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-center">Nenhum custo registrado.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot class="table-group-divider">
+        <tr class="table-light">
+            <td colspan="3" class="text-end fw-bold">Soma das Despesas Filtradas:</td>
+            <td class="text-end fw-bold text-danger fs-5">
+                R$ {{ total_geral|floatformat:2 }}
+            </td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+
+{% if is_paginated %}
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">Anterior</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Próximo</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock content %}

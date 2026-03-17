@@ -17,16 +17,16 @@
                 
                 <th class="text-center">Animais Atuais</th>
                 <th class="text-center">Lotação</th>
-                <th>Detalhes</th>
+                <th class="text-center">Detalhes</th>
             </tr>
         </thead>
         <tbody>
             {% for pasto in pastos %}
             {# O método get_total_animais é chamado no modelo Pasto para contar os animais no pasto_atual #}
             {% with total_animais=pasto.get_total_animais %}
-            <tr>
+            <tr class="position-relative">
                 <td>
-                    <a href="{% url 'pasto_detail' pk=pasto.pk %}">
+                    <a href="{% url 'pasto_detail' pk=pasto.pk %}" class="text-decoration-none fw-bold stretched-link">
                         <strong>{{ pasto.nome }}</strong>
                     </a>
                 </td>
@@ -48,11 +48,6 @@
                     {% else %}
                         <span class="badge bg-secondary">Capacidade N/A</span>
                     {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'pasto_detail' pk=pasto.pk %}" class="btn btn-sm btn-outline-info">
-                        Ver Animais
-                    </a>
                 </td>
             </tr>
             {% endwith %}

@@ -1,6 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Q
+
+from rebanho.models import Animal
 from .models import  RegistroDeCusto, CustoAnimalDetalhe, Venda, Despesa, TipoCusto
 
 

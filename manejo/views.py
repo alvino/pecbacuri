@@ -7,6 +7,7 @@ from django.views.generic import ListView, UpdateView, FormView
 from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Avg, Sum
+from django.db.models.functions import Length
 from datetime import  timedelta
 from django.utils import timezone
 from decimal import Decimal
@@ -16,8 +17,8 @@ from rebanho.models import Animal
 
 
 from .models import  TratamentoSaude, Reproducao, Pesagem,  TarefaManejo
-from .forms import  TratamentoForm, ReproducaoForm,  PesagemForm, PesagemForm,  PesagemModelForm
-
+from .forms import  ReproducaoSelectMultipleMatrizForm, TratamentoForm, ReproducaoForm,  PesagemForm, PesagemForm,  PesagemModelForm
+from .filters import PesagemFilter, ReproducaoFilter
 
 # --------------------------------
 # CreateViews do projeto de Pecuária
@@ -84,7 +85,7 @@ class PesagemCreateView(LoginRequiredMixin,FormView):
 
 class ReproducaoCreateView(LoginRequiredMixin,FormView):
     model = Reproducao
-    form_class = ReproducaoForm
+    form_class = ReproducaoSelectMultipleMatrizForm
     template_name = 'manejo/reproducao_form.html'
 
     def get_context_data(self, **kwargs):
@@ -211,6 +212,11 @@ class PesagemUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'manejo/pesagem_form.html'
     success_url = reverse_lazy('controle_peso_list')
 
+class ReproducaoUpdateView(LoginRequiredMixin, UpdateView):
+    model = Reproducao
+    form_class = ReproducaoForm
+    template_name = 'manejo/reproducao_form.html'
+    success_url = reverse_lazy('manejo_reprodutivo_list')
 
 # --------------------------------
 # ListViews do projeto de Pecuária
@@ -220,12 +226,30 @@ class ReproducaoListView(ListView):
     model = Reproducao
     template_name = 'manejo/reproducao_list.html'
     context_object_name = 'manejos'
-    paginate_by = 25
-
+    queryset = Reproducao.objects.select_related('matriz').annotate(
+            tamanho_id=Length('matriz__identificacao')
+        ).order_by('resultado', 'tamanho_id' ,'matriz__identificacao') 
+    paginate_by = 25 # Opção para paginar os resultados
+    
     def get_queryset(self):
-        # Filtra para mostrar os registros mais recentes primeiro
-        # e prioriza quem tem data de parto prevista
-        return Reproducao.objects.select_related('matriz').order_by('matriz', 'data_parto_prevista', '-data_cio')
+        # 1. Obtém o queryset base (todos os animais)
+        queryset = super().get_queryset()
+
+        # 2. Cria o objeto Filter com os dados GET (query string) e o queryset
+        self.filter = ReproducaoFilter(self.request.GET, queryset=queryset)
+        
+        # 3. Retorna o queryset filtrado
+        return self.filter.qs
+    
+    # Adicionando contexto extra (se precisar de contagens ou filtros)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Exemplo de contexto extra para o template:
+        context['total_ativo'] = Reproducao.objects.count()
+        context['filter'] = self.filter
+        return context
+
+   
 
 
 class AlertaRiscoListView(ListView):
@@ -315,8 +339,23 @@ class PesagemListView(ListView):
     model = Pesagem
     template_name = 'manejo/pesagem_list.html'
     context_object_name = 'pesagens'
-    # Ordena os registros pela data mais recente
-    ordering = ['-data_pesagem'] 
+    ordering = ['-data_pesagem']
+    paginate_by = 25 # Opção para paginar os resultados
+    
+    def get_queryset(self):
+        # 1. Obtém o queryset base (todos os animais)
+        queryset = super().get_queryset()
+        # 2. Cria o objeto Filter com os dados GET (query string) e o queryset
+        self.filter = PesagemFilter(self.request.GET, queryset=queryset)
+        # 3. Retorna o queryset filtrado
+        return self.filter.qs
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Exemplo de contexto extra para o template:
+        context['total_ativo'] = Pesagem.objects.all().count()
+        context['filter'] = self.filter
+        return context
 
 
 @login_required

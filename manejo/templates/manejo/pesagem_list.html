@@ -1,13 +1,54 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block title %}Controle de Peso - Gestão Nelore{% endblock %}
 
 {% block content %}
-    <h1 class="mb-4">Controle de Peso e GPMD</h1>
-    <p class="lead">Registro de pesagens e acompanhamento do Ganho de Peso Médio Diário.</p>
+<div class="d-flex justify-content-between align-items-center mb-2">
+        <h1>Controle de Peso e GPMD</h1>
+        <span class="badge bg-secondary">{{ pesagens|length }} registros</span>
+</div>
+    
+<div class="card p-3 mb-2">
+    <form method="get" class="row g-3 align-items-end">
 
-    <a href="{% url 'pesagem_create' %}" class="btn btn-success mb-4">Registrar Nova Pesagem</a>
+        {% for field in filter.form %}
+        <div class="col-md-auto">
 
+            <label for="{{ field.id_for_label }}" class="form-label">
+                {{ field.label }}
+            </label>
+
+            {{ field|addcss:"form-control" }}
+
+            {% if field.help_text %}
+            <div class="form-text">{{ field.help_text }}</div>
+            {% endif %}
+            {% for error in field.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+        </div>
+
+        <div class="col-md-auto">
+            <a href="{% url 'controle_peso_list' %}" class="btn btn-outline-secondary">
+                Limpar Filtro
+            </a>
+        </div>
+
+        <div class="col-md-auto">
+            <a href="{% url 'pesagem_create' %}" class="btn btn-success ">Registrar Nova Pesagem</a>
+        </div>
+
+    </form>
+</div>
+<hr>
+   
     <table class="table table-striped table-hover">
         <thead class="table-dark">
             <tr>
@@ -15,17 +56,19 @@
                 <th>Data Pesagem</th>
                 <th>Peso (Kg)</th>
                 <th>Evento</th>
-                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
             {% for registro in pesagens %}
-            <tr>
-                <td>{{ registro.animal.identificacao }}</td>
+            <tr class="position-relative">
+                <td>
+                    <a href="{%  url 'pesagem_update' registro.pk %}" class="text-decoration-none fw-bold stretched-link">
+                    {{ registro.animal.identificacao }}
+                </a>
+                </td>
                 <td>{{ registro.data_pesagem|date:"d/m/Y" }}</td>
                 <td>{{ registro.peso_kg }}</td>
                 <td>{{ registro.evento }}</td>
-                <td><a href="{% url 'pesagem_update' registro.pk %}">Editar</a></td> 
             </tr>
             {% empty %}
             <tr>

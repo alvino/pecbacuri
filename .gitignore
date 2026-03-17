@@ -7,4 +7,6 @@ ControleRebanho/migrations/0001_initial.py
 /venv
 /.venv
 /staticfiles_root
+backups
+
 

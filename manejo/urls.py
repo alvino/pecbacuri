@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import AlertaRiscoListView,  PesagemCreateView,   PesagemListView, ReproducaoListView, TratamentoSaudeListView, TratamentoCreateView, ReproducaoCreateView,  PesagemUpdateView
+from .views import AlertaRiscoListView,  PesagemCreateView,   PesagemListView, ReproducaoListView, ReproducaoUpdateView, TratamentoSaudeListView, TratamentoCreateView, ReproducaoCreateView,  PesagemUpdateView
 
 
 urlpatterns = [
@@ -12,6 +12,7 @@ urlpatterns = [
     path('tratamentos/novo-tratamento/', TratamentoCreateView.as_view(),name='tratamento_create'),
     path('reproducao', ReproducaoListView.as_view(), name='manejo_reprodutivo_list'),
     path('reproducao/nova-reproducao/', ReproducaoCreateView.as_view(),name='reproducao_create'),
+    path('reproducao/editar/<int:pk>/', ReproducaoUpdateView.as_view(),name='reproducao_update'),
     path('controle_peso/', PesagemListView.as_view(), name='controle_peso_list'),
     path('controle_peso/nova-pesagem/', PesagemCreateView.as_view(), name='pesagem_create'),
     path('controle_peso/<int:pk>/editar/', PesagemUpdateView.as_view(), name='pesagem_update'),

@@ -433,7 +433,7 @@ class AnimalListView(ListView):
     context_object_name = 'animais'
     # Filtra apenas os animais ativos por padrão
     queryset = Animal.objects.filter(situacao='VIVO')
-    paginate_by = 50 # Opção para paginar os resultados
+    paginate_by = 25 # Opção para paginar os resultados
     
     def get_queryset(self):
         # 1. Obtém o queryset base (todos os animais)

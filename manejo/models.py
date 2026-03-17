@@ -194,7 +194,8 @@ class Pesagem(models.Model):
     evento = models.CharField(
         max_length=50, 
         blank=True, 
-        verbose_name="Evento (Ex: Desmama, Anual, Repasse)"
+        verbose_name="Evento (Ex: Desmama, Anual, Repasse)",
+        default="Cadastro de peso regular"
     )
 
     def __str__(self):

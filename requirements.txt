@@ -15,4 +15,16 @@ django-import-export==4.3.10
 django-widget-tweaks==1.5.0
 djangorestframework==3.16.1
 sqlparse==0.5.3
+tablib==3.8.0asarPy==1.0.1
+asgiref==3.9.2
+diff-match-patch==20241021
+Django==5.2.6
+django-dbbackup==5.2.0
+django-filter==25.2
+django-import-export==4.3.10
+django-widget-tweaks==1.5.0
+djangorestframework==3.16.1
+gunicorn==23.0.0
+packaging==25.0
+sqlparse==0.5.3
 tablib==3.8.0

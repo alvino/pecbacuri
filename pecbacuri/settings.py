@@ -52,6 +52,7 @@ THIRD_PARTY_APPS = [
     'import_export',
     'rest_framework',
     'django_filters',
+    'dbbackup',
 ]
 
 LOCAL_APPS = [
@@ -109,6 +110,25 @@ DATABASES = {
 }
 
 
+# dbBackup
+# Defina onde os backups serão salvos (ex: pasta 'backups' na raiz do projeto)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    # ESTA É A PARTE QUE O DBBACKUP PRECISA:
+    "dbbackup": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": os.path.join(BASE_DIR, 'backups'), # Ajuste seu caminho aqui
+        },
+    },
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -131,6 +151,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 LANGUAGE_CODE = 'pt-br'
+USE_THOUSAND_SEPARATOR = True
+DECIMAL_SEPARATOR = ','
+THOUSAND_SEPARATOR = '.'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_L10N = True

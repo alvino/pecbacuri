@@ -70,21 +70,42 @@ class DashboardView(TemplateView):
             })
             
         context['alertas_paricao'] = lista_alertas
+
+
+        from django.utils import timezone
+
+        hoje = timezone.localdate()
+        ano_atual = hoje.year
         # 3. Dados para o Gráfico de Status Reprodutivo
         # Contagem de resultados de DG (Diagnóstico de Gestação) mais recentes:
         
         # Matrizes Prenhes (resultado='P')
-        total_prenhes = Reproducao.objects.filter(resultado='P', matriz__situacao='VIVO').count() 
+        total_prenhes = Reproducao.objects.filter(
+            resultado='P', 
+            matriz__situacao='VIVO'
+            ).count() 
         
         # Matrizes Vazias (resultado='V')
-        total_vazias = Reproducao.objects.filter(resultado='V', matriz__situacao='VIVO').count()
+        total_vazias = Reproducao.objects.filter(
+            resultado='V', 
+            matriz__situacao='VIVO'
+            ).count()
 
         # Matrizes Aguardando DG ('N' ou sem DG registrado, mas ativas)
-        total_aguardando = Reproducao.objects.filter(resultado='N', matriz__situacao='VIVO').count()
+        total_aguardando = Reproducao.objects.filter(
+            resultado='N', 
+            matriz__situacao='VIVO'
+            ).count()
         
         # 4. Dados para o Gráfico de Distribuição do Rebanho
-        total_vendido = Animal.objects.filter(situacao='VENDIDO').count()
-        total_baixa = Animal.objects.filter(situacao='MORTO').count()
+        total_vendido = Venda.objects.filter(
+            animal__situacao='VENDIDO',
+            data_venda__year=ano_atual
+            ).count()
+        total_baixa = BaixaAnimal.objects.filter(
+            animal__situacao='MORTO',
+            data_baixa__year=ano_atual
+            ).count()
         
         context = {
             'total_animais': total_animais,
@@ -118,4 +139,4 @@ def logout(request):
         pass
     auth.logout(request)
     messages.info(request, "You have been successfully logged out")
-    return redirect('login')
+    return redirect('dashboard')
