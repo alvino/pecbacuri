@@ -5,9 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}GPB - Gestão Pecuaria Bacuri{% endblock %}</title>
+   
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" href="{% static 'imagens/favicon-96x96.png' %}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{% static 'imagens/favicon.svg' %}" />
+    <link rel="shortcut icon" href="{% static 'imagens/favicon.ico' %}" />
+    <link rel="manifest" href="{% static 'imagens/site.webmanifest' %}" />
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+
     {% block head %}{% endblock head %}
 </head>
 <body>
@@ -86,7 +94,7 @@
                                 </a></li>
                             {% endcomment %}
                             <li><a class="dropdown-item" href="{% url 'custo_list' %}">
-                                 Custos
+                                <i class="bi bi-cash"></i> Custos
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
 
