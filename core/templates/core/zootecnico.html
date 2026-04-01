@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load l10n %}
+
+{% block title %}Análise Zootécnica Detalhada{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Análise Zootécnica <small class="text-muted">| {{ ano_atual|unlocalize }}</small></h1>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar ao Dashboard</a>
+    </div>
+
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-start border-warning border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-warning fw-bold">LOTAÇÃO (UA/HA)</h6>
+                    <h2 class="display-6 fw-bold">{{ lotacao_ua_ha }} <small class="fs-6 text-muted">UA/ha</small></h2>
+                    <p class="mb-0 text-muted">Total de <strong>{{ total_ua }} UA</strong> em {{ area_total|unlocalize|floatformat:2 }} ha</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-start border-info border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-info fw-bold">DENSIDADE</h6>
+                    <h2 class="display-6 fw-bold">{{ lotacao_cabecas_ha }} <small class="fs-6 text-muted">Cab/ha</small></h2>
+                    <p class="mb-0 text-muted">Média de cabeças por hectare</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-start border-success border-4 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-success fw-bold">TAXA DE NATALIDADE</h6>
+                    <h2 class="display-6 fw-bold">{{ taxa_natalidade }}%</h2>
+                    <p class="mb-0 text-muted">{{ nascimentos_ano }} nascimentos registrados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-start border-danger border-4 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-danger fw-bold">TAXA DE MORTALIDADE</h6>
+                    <h2 class="display-6 fw-bold">{{ taxa_mortalidade }}%</h2>
+                    <p class="mb-0 text-muted">{{ mortes_ano }} baixas no período</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-start border-primary border-4 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-primary fw-bold">EFICIÊNCIA DE PRENHEZ</h6>
+                    <h2 class="display-6 fw-bold">{{ taxa_prenhez }}%</h2>
+                    <p class="mb-0 text-muted">Baseado nos DGs do ano</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">Estrutura de Rebanho por Idade</div>
+                <div class="card-body">
+                    <canvas id="chartComposicaoEtaria"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 bg-light">
+                <div class="card-header fw-bold">Destaques do Período</div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush bg-transparent">
+                        <li class="list-group-item bg-transparent">Total Bezerros: <strong>{{ comp_bezerros }}</strong></li>
+                        <li class="list-group-item bg-transparent">Total Sobreanos: <strong>{{ comp_sobreanos }}</strong></li>
+                        <li class="list-group-item bg-transparent">Total Adultos: <strong>{{ comp_adultos }}</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctxEtaria = document.getElementById('chartComposicaoEtaria');
+    new Chart(ctxEtaria, {
+        type: 'bar',
+        data: {
+            labels: ['Bezerros (0-12m)', 'Sobreanos (13-24m)', 'Adultos (>24m)'],
+            datasets: [{
+                label: 'Quantidade de Cabeças',
+                data: [{{ comp_bezerros }}, {{ comp_sobreanos }}, {{ comp_adultos }}],
+                backgroundColor: ['#28a745', '#ffc107', '#0d6efd']
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+</script>
+{% endblock %}

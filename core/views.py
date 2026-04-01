@@ -4,13 +4,93 @@ from django.shortcuts import  redirect
 from django.contrib import messages, auth
 from django.views.generic import  TemplateView
 from django.contrib.auth.decorators import login_required # Importe o decorador
+from django.utils import timezone
+from django.db.models import Sum
+
 
 from datetime import date, timedelta
 
 
 from financeiro.models import Venda
+from infraestrutura.models import Pasto
 from rebanho.models import Animal, BaixaAnimal
 from manejo.models import Reproducao
+
+
+class ZootecnicoAnalyticsView(TemplateView):
+    template_name = 'core/zootecnico.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        hoje = timezone.localdate()
+        ano_atual = hoje.year
+
+        # --- DADOS BASE ---
+        animais_ativos = Animal.objects.filter(situacao='VIVO')
+        total_vivos = animais_ativos.count()
+        total_femeas = animais_ativos.filter(sexo='F').count()
+
+        # --- INDICADORES DE PERFORMANCE ---
+        # 1. Taxa de Natalidade (Nascimentos no ano vs Matrizes Atuais)
+        nascimentos_ano = Animal.objects.filter(data_nascimento__year=ano_atual).count()
+        taxa_natalidade = (nascimentos_ano / total_femeas * 100) if total_femeas > 0 else 0
+
+        # 2. Taxa de Mortalidade (Mortes no ano vs Rebanho Ativo)
+        mortes_ano = BaixaAnimal.objects.filter(data_baixa__year=ano_atual).count()
+        taxa_mortalidade = (mortes_ano / total_vivos * 100) if total_vivos > 0 else 0
+
+        # 3. Eficiência Reprodutiva (Prenhezes confirmadas no ano)
+        dgs_ano = Reproducao.objects.filter(data_dg__year=ano_atual)
+        taxa_prenhez = (dgs_ano.filter(resultado='P').count() / dgs_ano.count() * 100) if dgs_ano.exists() else 0
+
+        # --- CATEGORIZAÇÃO ETÁRIA ---
+        # Exemplo simples de categorias zootécnicas
+        bezerros = 0  # 0-12 meses
+        sobreanos = 0 # 13-24 meses
+        adultos = 0   # > 24 meses
+
+        for animal in animais_ativos:
+            if animal.total_meses <= 12: bezerros += 1
+            elif animal.total_meses <= 24: sobreanos += 1
+            else: adultos += 1
+
+        # --- CÁLCULO DE LOTAÇÃO ---
+        area_total_ha = Pasto.objects.aggregate(total_area=Sum('area_hectares'))['total_area'] or 0
+        animais_ativos = Animal.objects.filter(situacao='VIVO')
+        
+        total_ua = 0
+        for a in animais_ativos:
+            # Equivalência simplificada de Unidade Animal (UA)
+            if a.total_meses <= 12:
+                total_ua += 0.30  # Bezerro(a)
+            elif a.total_meses <= 24:
+                total_ua += 0.70  # Novilha/Garrote
+            else:
+                total_ua += 1.00  # Adulto (Vaca/Touro)
+
+        # Converta a area_total_ha para float para permitir o cálculo com total_ua
+        area_float = float(area_total_ha) if area_total_ha else 0
+
+        lotacao_cabecas_ha = (animais_ativos.count() / area_float) if area_float > 0 else 0
+        lotacao_ua_ha = (total_ua / area_float) if area_float > 0 else 0
+
+        context.update({
+            'area_total': area_total_ha,
+            'total_ua': round(total_ua, 1),
+            'lotacao_cabecas_ha': round(lotacao_cabecas_ha, 2),
+            'lotacao_ua_ha': round(lotacao_ua_ha, 2),
+            
+            'ano_atual': ano_atual,
+            'taxa_natalidade': round(taxa_natalidade, 1),
+            'taxa_mortalidade': round(taxa_mortalidade, 1),
+            'taxa_prenhez': round(taxa_prenhez, 1),
+            'nascimentos_ano': nascimentos_ano,
+            'mortes_ano': mortes_ano,
+            'comp_bezerros': bezerros,
+            'comp_sobreanos': sobreanos,
+            'comp_adultos': adultos,
+        })
+        return context
 
 
 class DashboardView(TemplateView):
@@ -72,7 +152,6 @@ class DashboardView(TemplateView):
         context['alertas_paricao'] = lista_alertas
 
 
-        from django.utils import timezone
 
         hoje = timezone.localdate()
         ano_atual = hoje.year
