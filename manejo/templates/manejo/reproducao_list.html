@@ -59,6 +59,7 @@
                     <th>Matriz</th>
                     <th>Data Cio/IA</th>
                     <th>Tipo</th>
+                    <th>Data DG</th>
                     <th>
                         Resultado DG
                         <a class="text-white" href="?sort=resultado_dg_desc"><i class="bi bi-arrow-down"></i></a> 
@@ -80,6 +81,7 @@
                     </td>
                     <td>{{ manejo.data_cio|date:"d/m/Y" }}</td>
                     <td><span class="badge bg-light text-dark">{{ manejo.get_tipo_display }}</span></td>
+                    <td>{{ manejo.data_dg|date:"d/m/Y"|default:"---" }}</td>
                     <td>
                         {% if manejo.resultado == 'P' %}
                             <span class="text-success fw-bold">Prenhe</span>

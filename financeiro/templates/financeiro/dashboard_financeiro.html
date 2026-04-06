@@ -5,66 +5,158 @@
 {% block title %}Dashboard Financeiro & Lucratividade{% endblock %}
 
 {% block content %}
-    <h1 class="mb-4"><i class="fas fa-chart-line"></i> Dashboard Financeiro</h1>
-    <p class="lead">Análise da performance financeira e lucratividade dos animais que saíram do rebanho.</p>
+<div class="row align-items-center mb-4">
+    <div class="col-lg-7 col-md-12 mb-3 mb-lg-0">
+        <h1 class="display-6 fw-bold text-primary">
+            <i class="fas fa-chart-line me-2"></i>Dashboard Financeiro
+        </h1>
+        <p class="lead text-muted mb-0">Análise de performance e lucratividade da Fazenda Bacuri.</p>
+    </div>
 
-    <form method="get" class="row g-3 align-items-end mb-5 bg-light p-3 rounded shadow-sm">
-        <div class="col-md-2">
-            <label for="ano" class="form-label">Filtrar Ano</label>
-            <select class="form-select" id="ano" name="ano" required>
-                {% localize off %}
-                {% for ano in anos_disponiveis %}
-                    <option value="{{ ano }}" {% if ano|stringformat:"s" == ano_filtro %}selected{% endif %}>
-                        {{ ano }}
-                    </option>
-                {% endfor %}
-                {% endlocalize %}
-            </select>
-        </div>
-        <div class="col-md-1">
-            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-        </div>
-    </form>
-    
-    <h2 class="mb-4">Resultado Geral em {{ ano_filtro }}</h2>
-    <div class="row g-4 mb-5">
-        
-        <div class="col-lg-4">
-            <div class="card h-100 border-danger">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Custos Totais (R$)</h6>
-                    <h5 class="card-title fs-3 fw-bold text-danger">R$ {{ custos_totais|floatformat:2|intcomma }}</h5>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card h-100 border-success">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Receitas Totais (R$)</h6>
-                    <h5 class="card-title fs-3 fw-bold">R$ {{ receitas_totais|floatformat:2|intcomma }}</h5>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4">
-    
-            <div class="card h-100 
-                {% if lucro_geral >= 0 %}border-success{% else %}border-danger{% endif %}
-            ">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Lucro / Prejuízo Geral (R$)</h6>
-                    <h5 class="card-title fs-3 fw-bold 
-                        {% if lucro_geral >= 0 %}text-success{% else %}text-danger{% endif %}
-                    ">
-                        <i class="
-                            {% if lucro_geral >= 0 %}fas fa-arrow-up{% else %}fas fa-arrow-down{% endif %}
-                        me-2"></i> R$ {{ lucro_geral|floatformat:2|intcomma }}
-                    </h5>
+    <div class="col-lg-5 col-md-12">
+        <form method="get" class="row g-2 justify-content-lg-end align-items-end">
+            <div class="col-auto">
+                <label for="ano" class="form-label small fw-bold text-secondary">Filtrar Ano</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
+                    <select class="form-select" id="ano" name="ano" onchange="this.form.submit()">
+                        {% localize off %}
+                        {% for ano in anos_disponiveis %}
+                            <option value="{{ ano }}" {% if ano|stringformat:"s" == ano_filtro %}selected{% endif %}>
+                                {{ ano }}
+                            </option>
+                        {% endfor %}
+                        {% endlocalize %}
+                    </select>
                 </div>
             </div>
             
+        </form>
+    </div>
+</div>
+
+<hr class="mb-5 text-muted opacity-25">
+    
+
+    
+    
+    <h2 class="mb-4">Resultado Geral em {{ ano_filtro }}</h2>
+
+    <div class="row">
+        
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Custo por UA / Ano</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">R$ {{ custo_por_ua|floatformat:2 }}</div>
+                            <small class="text-muted">Total de {{ total_ua|floatformat:1 }} UAs</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cow fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Custo da @ Produzida</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">R$ {{ custo_arroba|floatformat:2 }}</div>
+                            <small class="text-muted">Produção: {{ total_arrobas|floatformat:1 }} @</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-weight fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Arrobas Ganhas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_arrobas|floatformat:1 }} @</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                                Despesa Total</div>
+                            <div class="h5 mb-0 font-weight-bold text-danger">R$ {{ total_despesas|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                                Receitas Totais</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">R$ {{ receitas_totais|floatformat:2|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card {% if lucro_geral >= 0 %}border-success{% else %}border-danger{% endif %} shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                                Resultado Geral (R$)</div>
+                            <div class="h5 mb-0 font-weight-bold {% if lucro_geral >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                <i class="{% if lucro_geral >= 0 %}fas fa-arrow-up{% else %}fas fa-arrow-down{% endif %} me-2"></i> 
+                                R$ {{ lucro_geral|floatformat:2|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x {% if lucro_geral >= 0 %}text-success{% else %}text-danger{% endif %}"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        
+        
     </div>
 
     {% if detalhe_lucratividade %}

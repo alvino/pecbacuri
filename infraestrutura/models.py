@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum
 
 
 
@@ -17,6 +18,12 @@ class Pasto(models.Model):
         default=10,
     )
 
+    @property
+    def total_ua(self):
+        # Soma o peso de todos os animais no pasto e divide por 450
+        # Supõe que você tem uma relação entre Animal e Pasto
+        peso_total = self.get_animais_no_pasto().aggregate(total=Sum('ultimo_peso'))['total'] or 0
+        return peso_total / 450
 
     def __str__(self):
         return self.nome

@@ -133,7 +133,32 @@ class Animal(models.Model):
             return f"{idade_anos} ano(s) e {idade_meses} mes(es)"
         else:
             return 0
+    
+    @property
+    def ua_atual(self):
+        peso_atual = self.obter_ultimo_peso()
         
+        if peso_atual == 0:
+            if self.total_meses <= 8:
+                return 0.30  # Bezerro(a)
+            elif self.total_meses < 12:
+                return 0.40  # Bezerro(a) próximo do desmame
+            elif self.total_meses < 24:
+                return 0.70  # Novilha/Garrote
+            elif self.sexo == 'F':
+                return 1.00  # Adulto (Vaca)
+            else:
+                return 1.50  # Touro adulto
+
+        return float(peso_atual) / 450
+
+    def obter_ultimo_peso(self):
+        # Busca a pesagem mais recente deste animal
+        ultima_pesagem = self.historico_pesagens.order_by('-data_pesagem').first()
+        if ultima_pesagem:
+            return ultima_pesagem.peso_kg
+        return 0 # Caso o animal ainda não tenha sido pesado
+    
     def get_absolute_url(self):
         """ Retorna a URL para a instância do objeto (AnimalDetailView). """
         # O 'pk=self.pk' usa a chave primária para construir a URL

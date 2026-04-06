@@ -5,14 +5,15 @@ from django.contrib import messages, auth
 from django.views.generic import  TemplateView
 from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.utils import timezone
-from django.db.models import Sum
 
 
 from datetime import date, timedelta
 
 
+from core.services import ZootecnicoService
 from financeiro.models import Venda
 from infraestrutura.models import Pasto
+from manejo.services import ReproducaoService
 from rebanho.models import Animal, BaixaAnimal
 from manejo.models import Reproducao
 
@@ -22,74 +23,13 @@ class ZootecnicoAnalyticsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        hoje = timezone.localdate()
-        ano_atual = hoje.year
 
-        # --- DADOS BASE ---
-        animais_ativos = Animal.objects.filter(situacao='VIVO')
-        total_vivos = animais_ativos.count()
-        total_femeas = animais_ativos.filter(sexo='F').count()
-
-        # --- INDICADORES DE PERFORMANCE ---
-        # 1. Taxa de Natalidade (Nascimentos no ano vs Matrizes Atuais)
-        nascimentos_ano = Animal.objects.filter(data_nascimento__year=ano_atual).count()
-        taxa_natalidade = (nascimentos_ano / total_femeas * 100) if total_femeas > 0 else 0
-
-        # 2. Taxa de Mortalidade (Mortes no ano vs Rebanho Ativo)
-        mortes_ano = BaixaAnimal.objects.filter(data_baixa__year=ano_atual).count()
-        taxa_mortalidade = (mortes_ano / total_vivos * 100) if total_vivos > 0 else 0
-
-        # 3. Eficiência Reprodutiva (Prenhezes confirmadas no ano)
-        dgs_ano = Reproducao.objects.filter(data_dg__year=ano_atual)
-        taxa_prenhez = (dgs_ano.filter(resultado='P').count() / dgs_ano.count() * 100) if dgs_ano.exists() else 0
-
-        # --- CATEGORIZAÇÃO ETÁRIA ---
-        # Exemplo simples de categorias zootécnicas
-        bezerros = 0  # 0-12 meses
-        sobreanos = 0 # 13-24 meses
-        adultos = 0   # > 24 meses
-
-        for animal in animais_ativos:
-            if animal.total_meses <= 12: bezerros += 1
-            elif animal.total_meses <= 24: sobreanos += 1
-            else: adultos += 1
-
-        # --- CÁLCULO DE LOTAÇÃO ---
-        area_total_ha = Pasto.objects.aggregate(total_area=Sum('area_hectares'))['total_area'] or 0
-        animais_ativos = Animal.objects.filter(situacao='VIVO')
         
-        total_ua = 0
-        for a in animais_ativos:
-            # Equivalência simplificada de Unidade Animal (UA)
-            if a.total_meses <= 12:
-                total_ua += 0.30  # Bezerro(a)
-            elif a.total_meses <= 24:
-                total_ua += 0.70  # Novilha/Garrote
-            else:
-                total_ua += 1.00  # Adulto (Vaca/Touro)
 
-        # Converta a area_total_ha para float para permitir o cálculo com total_ua
-        area_float = float(area_total_ha) if area_total_ha else 0
-
-        lotacao_cabecas_ha = (animais_ativos.count() / area_float) if area_float > 0 else 0
-        lotacao_ua_ha = (total_ua / area_float) if area_float > 0 else 0
-
-        context.update({
-            'area_total': area_total_ha,
-            'total_ua': round(total_ua, 1),
-            'lotacao_cabecas_ha': round(lotacao_cabecas_ha, 2),
-            'lotacao_ua_ha': round(lotacao_ua_ha, 2),
-            
-            'ano_atual': ano_atual,
-            'taxa_natalidade': round(taxa_natalidade, 1),
-            'taxa_mortalidade': round(taxa_mortalidade, 1),
-            'taxa_prenhez': round(taxa_prenhez, 1),
-            'nascimentos_ano': nascimentos_ano,
-            'mortes_ano': mortes_ano,
-            'comp_bezerros': bezerros,
-            'comp_sobreanos': sobreanos,
-            'comp_adultos': adultos,
-        })
+        # Chama o serviço e atualiza o contexto de uma vez
+        indicadores = ZootecnicoService.obter_indicadores_performance()
+        context.update(indicadores)
+        
         return context
 
 
@@ -158,23 +98,6 @@ class DashboardView(TemplateView):
         # 3. Dados para o Gráfico de Status Reprodutivo
         # Contagem de resultados de DG (Diagnóstico de Gestação) mais recentes:
         
-        # Matrizes Prenhes (resultado='P')
-        total_prenhes = Reproducao.objects.filter(
-            resultado='P', 
-            matriz__situacao='VIVO'
-            ).count() 
-        
-        # Matrizes Vazias (resultado='V')
-        total_vazias = Reproducao.objects.filter(
-            resultado='V', 
-            matriz__situacao='VIVO'
-            ).count()
-
-        # Matrizes Aguardando DG ('N' ou sem DG registrado, mas ativas)
-        total_aguardando = Reproducao.objects.filter(
-            resultado='N', 
-            matriz__situacao='VIVO'
-            ).count()
         
         # 4. Dados para o Gráfico de Distribuição do Rebanho
         total_vendido = Venda.objects.filter(
@@ -186,22 +109,20 @@ class DashboardView(TemplateView):
             data_baixa__year=ano_atual
             ).count()
         
-        context = {
+        indices_reproducao = ReproducaoService.obter_dados_estacao(ano_atual-1)
+        context.update(indices_reproducao)
+
+        context.update({
             'total_animais': total_animais,
             'total_machos': total_machos,
             'total_femeas': total_femeas,
             'alerta_genealogia': alerta_genealogia,
             'alerta_desmame': alerta_desmame,
-
-            # Dados do Gráfico Reprodutivo
-            'total_prenhes': total_prenhes,
-            'total_vazias': total_vazias,
-            'total_aguardando': total_aguardando,
             
             # Dados do Gráfico de Distribuição
             'total_vendido': total_vendido,
             'total_baixa': total_baixa,
-        }
+        })
         
         return context
 
