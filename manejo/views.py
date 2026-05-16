@@ -139,7 +139,7 @@ class ReproducaoCreateView(LoginRequiredMixin,FormView):
         animal_id = self.request.GET.get('animal_id')
         if animal_id:
             return reverse('animal_detail', kwargs={'pk': animal_id})
-        return reverse('tratamentos_saude_list')
+        return reverse('manejo_reprodutivo_list')
     
 
 class TratamentoCreateView(LoginRequiredMixin,FormView):
@@ -217,6 +217,11 @@ class ReproducaoUpdateView(LoginRequiredMixin, UpdateView):
     form_class = ReproducaoForm
     template_name = 'manejo/reproducao_form.html'
     success_url = reverse_lazy('manejo_reprodutivo_list')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['data_dg'] = timezone.localdate()
+        return initial
 
 # --------------------------------
 # ListViews do projeto de Pecuária

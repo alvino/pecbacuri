@@ -14,24 +14,27 @@
     </div>
 
     <div class="col-lg-5 col-md-12">
-        <form method="get" class="row g-2 justify-content-lg-end align-items-end">
-            <div class="col-auto">
-                <label for="ano" class="form-label small fw-bold text-secondary">Filtrar Ano</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
-                    <select class="form-select" id="ano" name="ano" onchange="this.form.submit()">
-                        {% localize off %}
-                        {% for ano in anos_disponiveis %}
-                            <option value="{{ ano }}" {% if ano|stringformat:"s" == ano_filtro %}selected{% endif %}>
-                                {{ ano }}
-                            </option>
-                        {% endfor %}
-                        {% endlocalize %}
-                    </select>
+        {% comment %}
+            <form method="get" class="row g-2 justify-content-lg-end align-items-end">
+                <div class="col-auto">
+                    <label for="ano" class="form-label small fw-bold text-secondary">Filtrar Ano</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
+                        <select class="form-select" id="ano" name="ano" onchange="this.form.submit()">
+                            {% localize off %}
+                            {% for ano in anos_disponiveis %}
+                                <option value="{{ ano }}" {% if ano|stringformat:"s" == ano_filtro %}selected{% endif %}>
+                                    {{ ano }}
+                                </option>
+                            {% endfor %}
+                            {% endlocalize %}
+                        </select>
+                    </div>
                 </div>
-            </div>
-            
-        </form>
+                
+            </form>
+        {% endcomment %}
+        <h2 class="text-muted fw-bold mb-4">Resultado Geral em {{ ano_filtro }}</h2>
     </div>
 </div>
 
@@ -40,132 +43,123 @@
 
     
     
-    <h2 class="mb-4">Resultado Geral em {{ ano_filtro }}</h2>
+    
 
-    <div class="row">
-        
-
-        <div class="col-xl-3 col-md-6 mb-4">
+    <div class="row g-3 mb-4">
+        <div class="col-xl col-md-4 col-sm-6">
             <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Custo por UA / Ano</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">R$ {{ custo_por_ua|floatformat:2 }}</div>
-                            <small class="text-muted">Total de {{ total_ua|floatformat:1 }} UAs</small>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-cow fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                <div class="card-body py-1">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">R$ / UA / Ano</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800">R$ {{ custo_por_ua|floatformat:2 }}</div>
+                    <small class="text-muted" style="font-size: 0.7rem;">{{ total_ua|floatformat:1 }} UAs</small>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl col-md-4 col-sm-6">
             <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Custo da @ Produzida</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">R$ {{ custo_arroba|floatformat:2 }}</div>
-                            <small class="text-muted">Produção: {{ total_arrobas|floatformat:1 }} @</small>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-weight fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                <div class="card-body py-1">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Custo @ Prod.</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800">R$ {{ custo_arroba|floatformat:2 }}</div>
+                    <small class="text-muted" style="font-size: 0.7rem;">{{ total_arrobas|floatformat:1 }} @</small>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body py-1">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">@ Ganhas</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800">{{ total_arrobas|floatformat:1 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body py-1">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">@/UA</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800">{{ arrobas_por_ua|floatformat:1 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body py-1">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Despesa Total</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800">R$ {{ total_despesas|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-4 col-sm-6">
             <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Arrobas Ganhas</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_arrobas|floatformat:1 }} @</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                        </div>
+                <div class="card-body py-1">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Receitas Totais</div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800">R$ {{ receitas_totais|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="card {% if lucro_geral >= 0 %}border-left-success{% else %}border-left-danger{% endif %} shadow h-100 py-2">
+                <div class="card-body py-1">
+                    <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Resultado</div>
+                    <div class="h6 mb-0 font-weight-bold {% if lucro_geral >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        R$ {{ lucro_geral|floatformat:2 }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4 mb-5">
+    <h3 class="text-muted fw-bold mb-4"><i class="bi bi-pie-chart-fill"></i> Resumo de Custos por Categoria</h3>
+    <hr>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
-                                Despesa Total</div>
-                            <div class="h5 mb-0 font-weight-bold text-danger">R$ {{ total_despesas|floatformat:2 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-danger"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
-                                Receitas Totais</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">R$ {{ receitas_totais|floatformat:2|intcomma }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-success"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card {% if lucro_geral >= 0 %}border-success{% else %}border-danger{% endif %} shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
-                                Resultado Geral (R$)</div>
-                            <div class="h5 mb-0 font-weight-bold {% if lucro_geral >= 0 %}text-success{% else %}text-danger{% endif %}">
-                                <i class="{% if lucro_geral >= 0 %}fas fa-arrow-up{% else %}fas fa-arrow-down{% endif %} me-2"></i> 
-                                R$ {{ lucro_geral|floatformat:2|intcomma }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x {% if lucro_geral >= 0 %}text-success{% else %}text-danger{% endif %}"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        
-        
-        
+    <div class="row">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Categoria</th>
+                    <th>Porcentagem</th>
+                    <th class="text-end">Total Acumulado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in custos_por_categoria %}
+                <tr>
+                    <td class="fw-bold">{{ item.tipo_custo__nome }}</td>
+                    {% widthratio item.total total_geral 100 as porcentagem %}
+                    <td>
+                        {% comment %}
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-danger" role="progressbar" 
+                                    style="width: {{ porcentagem }}%" 
+                                    aria-valuenow="{{ porcentagem }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        {% endcomment %}
+                        <span class="text-muted">{{ porcentagem }}%</span>
+                    </td>
+                    <td class="text-end text-danger">R$ {{ item.total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                    <tr><td colspan="2">Nenhum custo registrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
     {% if detalhe_lucratividade %}
     <div class="d-flex justify-content-between align-items-center mb-2">
-        <h3 >Lucratividade por Animal (Saídos)</h3>
+        <h3 class="text-muted fw-bold mb-4" >Lucratividade por Animal (Saídos)</h3>
         <span class="badge bg-secondary">{{ detalhe_lucratividade|length }} registros</span>
     </div>
         <table class="table table-striped table-hover">
-            <thead class="table-dark">
+            <thead class="table-light">
                 <tr>
                     <th>Animal</th>
                     <th>Data de Saída</th>

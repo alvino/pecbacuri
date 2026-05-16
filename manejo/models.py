@@ -92,7 +92,7 @@ class Reproducao(models.Model):
     resultado = models.CharField(
         max_length=10, 
         choices=[
-            ('P', 'Prenhe'),
+            ('P', 'Prenha'),
             ('V', 'Vazia'),
             ('N', 'Não Verificado')
         ],

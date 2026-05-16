@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Fluxo de Caixa{% endblock %}
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Fluxo de Caixa Mensal</h2>
+
+    <!-- Área do Gráfico -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <canvas id="fluxoChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- Tabela de Dados -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Mês/Ano</th>
+                        <th>Entradas (R$)</th>
+                        <th>Saídas (R$)</th>
+                        <th>Saldo (R$)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in fluxo %}
+                    <tr>
+                        <td>{{ item.mes }}</td>
+                        <td class="text-success">R$ {{ item.entradas|floatformat:2 }}</td>
+                        <td class="text-danger">R$ {{ item.saidas|floatformat:2 }}</td>
+                        <td class="fw-bold {% if item.saldo >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                            R$ {{ item.saldo|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuração do Gráfico
+    const ctx = document.getElementById('fluxoChart').getContext('2d');
+    const fluxoChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels_json|safe }},
+            datasets: [
+                {
+                    label: 'Entradas (Vendas)',
+                    data: {{ entradas_json|safe }},
+                    backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                    borderColor: 'rgb(40, 167, 69)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Saídas (Despesas)',
+                    data: {{ saidas_json|safe }},
+                    backgroundColor: 'rgba(220, 53, 69, 0.6)',
+                    borderColor: 'rgb(220, 53, 69)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
+
+{% endblock %}

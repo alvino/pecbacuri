@@ -1,7 +1,7 @@
 # core/services.py
 from django.db.models import Sum
 from django.utils import timezone
-
+from datetime import timedelta
 
 from infraestrutura.models import Pasto
 from manejo.models import Reproducao
@@ -31,10 +31,26 @@ class ZootecnicoService:
         taxa_mortalidade = (mortes_ano / total_vivos * 100) if total_vivos > 0 else 0
 
         # 3. Eficiência Reprodutiva
-        indice_reproducao = ReproducaoService.obter_dados_estacao(ano_atual-1)
-        total_reproducoes = indice_reproducao['total_servicos']
+        # 1. Pegamos os dados da estação (prenhezes confirmadas)
+        indice_reproducao = ReproducaoService.obter_dados_estacao(ano_atual - 1)
         prenhezes = indice_reproducao['prenhezes']
-        taxa_prenhez = (prenhezes / total_reproducoes * 100) if total_reproducoes > 0 else 0
+
+        # 2. Buscamos o total de matrizes (fêmeas ativas) que poderiam ter emprenhado
+        # Filtramos por sexo 'F' e status 'Ativo'
+        # Usamos 426 dias como aproximação de 14 meses (14 * 30.4)
+        # Exemplo: Apenas fêmeas ativas com mais de 2 anos (730 dias)
+        data_limite_14_meses = timezone.now().date() - timedelta(days=730)
+        total_matrizes_ativas = Animal.objects.filter(
+            sexo='F', 
+            situacao='VIVO', 
+            data_nascimento__lte=data_limite_14_meses
+        ).count()
+
+        # 3. Cálculo da Taxa de Prenhez sobre o rebanho vivo
+        # A fórmula é: (Prenhezes / Matrizes Ativas) * 100
+        taxa_prenhez = (prenhezes / total_matrizes_ativas * 100) if total_matrizes_ativas > 0 else 0
+
+        
 
         # --- CATEGORIZAÇÃO ETÁRIA ---
         # Inicializamos os contadores
@@ -78,4 +94,7 @@ class ZootecnicoService:
             'comp_sobreanos': sobreanos,
             'comp_adultos': adultos,
             'total_vivos': total_vivos,
+
+            'total_matrizes': total_matrizes_ativas,
+            'prenhezes': prenhezes,
         }

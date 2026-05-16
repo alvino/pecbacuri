@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CategoriaDespesaCreateView, DashboardFinanceiroCBV, DespesaCreateView, DespesaListView, RegistroCustoListView, RelatorioDesempenhoPastoView, VendaCreateView
+from .views import CategoriaDespesaCreateView, DashboardFinanceiroCBV, DespesaCreateView, DespesaListView, RegistroCustoListView, RelatorioDesempenhoPastoView, VendaCreateView, dashboard_fluxo_caixa
 
 
 urlpatterns = [
@@ -10,4 +10,5 @@ urlpatterns = [
    path('vendas/nova/', VendaCreateView.as_view(), name='venda_create'),
    path('despesas/', DespesaListView.as_view(), name='despesa_list'),
    path('custos/', RegistroCustoListView.as_view(), name='custo_list'), # Alias para despesas, já que no modelo se chama RegistroDeCusto
+   path('fluxo-caixa/', dashboard_fluxo_caixa, name='fluxo_caixa'),
 ]

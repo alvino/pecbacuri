@@ -23,9 +23,7 @@ class ZootecnicoAnalyticsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         
-
         # Chama o serviço e atualiza o contexto de uma vez
         indicadores = ZootecnicoService.obter_indicadores_performance()
         context.update(indicadores)
@@ -59,6 +57,7 @@ class DashboardView(TemplateView):
             
                 if animal.total_meses >= meses_desmame_min and animal.total_meses <= meses_desmame_max:
                     alerta_desmame.append({
+                        'pk': animal.pk,
                         'identificacao': animal.identificacao,
                         'idade_meses': animal.total_meses,
                         'data_nascimento': animal.data_nascimento

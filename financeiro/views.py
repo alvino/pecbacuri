@@ -20,6 +20,65 @@ from rebanho.models import Animal, BaixaAnimal
 from .models import  CategoriaDespesa, Despesa, RegistroDeCusto, CustoAnimalDetalhe,  Venda
 
 
+from django.shortcuts import render
+from django.db.models.functions import TruncMonth
+from collections import defaultdict
+import json
+
+def dashboard_fluxo_caixa(request):
+    # Agrupar Vendas por mês
+    vendas_mes = Venda.objects.annotate(
+        mes=TruncMonth('data_venda')
+    ).values('mes').annotate(total=Sum('valor_total')).order_by('mes')
+
+    # Agrupar Despesas por mês
+    despesas_mes = Despesa.objects.annotate(
+        mes=TruncMonth('data_pagamento')
+    ).values('mes').annotate(total=Sum('valor')).order_by('mes')
+
+    # Unificar os dados em um dicionário estruturado
+    dados_fluxo = defaultdict(lambda: {'entradas': 0, 'saidas': 0})
+
+    for v in vendas_mes:
+        dados_fluxo[v['mes']]['entradas'] = float(v['total'])
+
+    for d in despesas_mes:
+        dados_fluxo[d['mes']]['saidas'] = float(d['total'])
+
+    # Criar lista ordenada para o template e para o gráfico
+    fluxo_ordenado = []
+    labels_grafico = []
+    entradas_grafico = []
+    saidas_grafico = []
+
+    for mes in sorted(dados_fluxo.keys()):
+        mes_formatado = mes.strftime('%m/%Y')
+        entradas = dados_fluxo[mes]['entradas']
+        saidas = dados_fluxo[mes]['saidas']
+        saldo = entradas - saidas
+
+        fluxo_ordenado.append({
+            'mes': mes_formatado,
+            'entradas': entradas,
+            'saidas': saidas,
+            'saldo': saldo
+        })
+
+        # Dados para o Chart.js
+        labels_grafico.append(mes_formatado)
+        entradas_grafico.append(entradas)
+        saidas_grafico.append(saidas)
+
+    context = {
+        'fluxo': fluxo_ordenado,
+        'labels_json': json.dumps(labels_grafico),
+        'entradas_json': json.dumps(entradas_grafico),
+        'saidas_json': json.dumps(saidas_grafico),
+    }
+
+    return render(request, 'financeiro/fluxo_caixa.html', context)
+
+
 class RegistroCustoListView(LoginRequiredMixin, ListView):
     model = RegistroDeCusto
     template_name = 'financeiro/custo_list.html'
@@ -142,11 +201,23 @@ class DashboardFinanceiroCBV(TemplateView):
 
         context.update(CalculadorIndices.obter_estatisticas_financeiras(ano_filtro=ano_filtro))
        
+        # 1. Agrupamento por Categoria e Soma dos Valores
+        # O Django faz: SELECT categoria, SUM(valor) GROUP BY categoria
+        custos_por_categoria = (
+            RegistroDeCusto.objects.values('tipo_custo__nome')
+            .annotate(total=Sum('valor'))
+            .order_by('-total')
+        )
+
         
-        # 4. Adicionar ao Contexto
+        # 4. Adicionar ao Contexto# 2. (Opcional) Soma total para calcular porcentagens no template
+        total_geral = RegistroDeCusto.objects.aggregate(Sum('valor'))['valor__sum'] or 0
+
         context.update({
             'ano_filtro': ano_filtro,
             'anos_disponiveis': range(hoje.year, hoje.year - 5, -1),
+            'custos_por_categoria': custos_por_categoria,
+            'total_geral': total_geral,
         })
         
         return context

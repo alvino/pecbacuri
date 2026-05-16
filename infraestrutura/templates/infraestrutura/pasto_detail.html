@@ -69,7 +69,7 @@
     <tbody>
         {% for animal in animais_no_pasto %}
         <tr>
-            <td><a href="{% url 'animal_detail' pk=animal.pk %}"><strong>{{ animal.identificacao }}</strong></a></td>
+            <td><a href="{% url 'rebanho:animal_detail' pk=animal.pk %}"><strong>{{ animal.identificacao }}</strong></a></td>
             <td>{{ animal.get_sexo_display }}</td>
             <td>{{ animal.data_nascimento|timesince|cut:" ago" }}</td>
             <td>

@@ -374,7 +374,7 @@ class AnaliseDesempenhoLotesCBV(TemplateView):
 
 
 class AnaliseDesempenhoLotesCBV(TemplateView):
-    template_name = 'pecuaria/analise_lotes.html'
+    template_name = 'rebanho/analise_lotes.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -435,8 +435,8 @@ class BaixaAnimalCreateView(LoginRequiredMixin, FormView):
             observacoes=form.cleaned_data['observacoes']
         )
 
-        # Atualiza a situação do animal para "BAIXADO"
-        animal.situacao = 'BAIXADO'
+        # Atualiza a situação do animal para "MORTO"
+        animal.situacao = 'MORTO'
         animal.save()
 
         messages.success(self.request, f'Animal {animal.identificacao} baixado com sucesso.')

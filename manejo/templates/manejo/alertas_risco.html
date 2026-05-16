@@ -18,7 +18,7 @@
         {% for item in animais_em_risco %}
         <tr>
             <td>
-                <a href="{% url 'animal_detail' item.animal.id %}">{{ item.animal.identificacao }}</a>
+                <a href="{% url 'rebanho:animal_detail' item.animal.id %}">{{ item.animal.identificacao }}</a>
             </td>
             <td>{{ item.animal.pasto }}</td>
             <td>

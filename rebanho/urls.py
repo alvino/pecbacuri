@@ -10,6 +10,7 @@ router = DefaultRouter()
 router.register(r'animais', AnimalViewSet)
 # Você registraria outros ViewSets aqui (ex: router.register(r'pesagens', PesagemViewSet))
 
+app_name = 'rebanho'
 
 urlpatterns = [
     path('analise/idade/', AnalisePorIdadeView.as_view(), name='analise_por_idade'),

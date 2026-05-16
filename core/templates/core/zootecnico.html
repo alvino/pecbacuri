@@ -9,63 +9,67 @@
         <a href="{% url 'dashboard' %}" class="btn btn-secondary">Voltar ao Dashboard</a>
     </div>
 
-    <h4>Indicadores de Desempenho</h4>
-    <div class="row g-4 mb-2">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <h6 class="text-warning fw-bold">LOTAÇÃO (UA/HA)</h6>
-                    <h2 class="display-6 fw-bold">{{ lotacao_ua_ha }} <small class="fs-6 text-muted">UA/ha</small></h2>
-                    <p class="mb-0 text-muted">Total de <strong>{{ total_ua }} UA</strong> em {{ area_total|unlocalize|floatformat:2 }} ha</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <h6 class="text-info fw-bold">DENSIDADE</h6>
-                    <h2 class="display-6 fw-bold">{{ lotacao_cabecas_ha }} <small class="fs-6 text-muted">Cab/ha</small></h2>
-                    <p class="mb-0 text-muted">Média de cabeças por hectare</p>
-                </div>
-            </div>
-        </div>
-        
+    <div class="row mb-2">
+    <div class="col-12">
+        <h4 class="text-muted fw-bold"></i>Indicadores de Campo e Reprodução</h4>
     </div>
+</div>
 
-    <h4>Desempenho Reprodutivo</h4>
-    <div class="row g-4 mb-2">
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <h6 class="text-success fw-bold">TAXA DE NATALIDADE</h6>
-                    <h2 class="display-6 fw-bold">{{ taxa_natalidade }}%</h2>
-                    <p class="mb-0 text-muted">{{ nascimentos_ano }} nascimentos registrados</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <h6 class="text-danger fw-bold">TAXA DE MORTALIDADE</h6>
-                    <h2 class="display-6 fw-bold">{{ taxa_mortalidade }}%</h2>
-                    <p class="mb-0 text-muted">{{ mortes_ano }} baixas no período</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <h6 class="text-primary fw-bold">EFICIÊNCIA DE PRENHEZ</h6>
-                    <h2 class="display-6 fw-bold">{{ taxa_prenhez }}%</h2>
-                    <p class="mb-0 text-muted">Baseado nos DGs do ano</p>
-                </div>
+<div class="row g-3 mb-4">
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <h6 class="text-warning fw-bold text-uppercase small">Lotação</h6>
+                <h2 class="h4 fw-bold mb-1">{{ lotacao_ua_ha }} <small class="fs-6 text-muted">UA/ha</small></h2>
+                <p class="mb-0 x-small text-muted">Total: <strong>{{ total_ua }} UA</strong></p>
             </div>
         </div>
     </div>
-    <h4>Composição Etária do Rebanho</h4>
+    
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <h6 class="text-info fw-bold text-uppercase small">Densidade</h6>
+                <h2 class="h4 fw-bold mb-1">{{ lotacao_cabecas_ha }} <small class="fs-6 text-muted">Cab/ha</small></h2>
+                <p class="mb-0 x-small text-muted">Média por hectare</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <h6 class="text-success fw-bold text-uppercase small">Natalidade</h6>
+                <h2 class="h4 fw-bold mb-1">{{ taxa_natalidade }}%</h2>
+                <p class="mb-0 x-small text-muted">{{ nascimentos_ano }} nascimentos</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <h6 class="text-danger fw-bold text-uppercase small">Mortalidade</h6>
+                <h2 class="h4 fw-bold mb-1">{{ taxa_mortalidade }}%</h2>
+                <p class="mb-0 x-small text-muted">{{ mortes_ano }} baixas</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <h6 class="text-primary fw-bold text-uppercase small">Prenhez</h6>
+                <h2 class="h4 fw-bold mb-1">{{ taxa_prenhez }}%</h2>
+                <p class="mb-0 x-small text-muted">DGs {{prenhezes}} prenhes {{total_matrizes}} matriz</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
     <div class="row g-4 mb-2">
+        <h4 class="text-muted fw-bold">Composição Etária do Rebanho</h4>
         <div class="col-md-8">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white fw-bold">Estrutura de Rebanho por Idade</div>

@@ -81,7 +81,7 @@
             <tbody>
                 {% for animal in animais_desempenho %}
                 <tr>
-                    <td><a href="{% url 'animal_detail' pk=animal.identificacao %}">{{ animal.identificacao }}</a></td>
+                    <td><a href="{% url 'rebanho:animal_detail' pk=animal.identificacao %}">{{ animal.identificacao }}</a></td>
                     <td class="text-end">{{ animal.peso_atual|floatformat:2|default:"N/A" }}</td>
                     <td class="text-end">
                         {% if animal.gpmd_medio > relatorio_resumo.media_gpmd_lote %}

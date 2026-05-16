@@ -17,44 +17,81 @@
     <p class="lead">Bem-vindo ao centro de controle da sua fazenda. Visão geral do rebanho ativo:</p>
 
 
-    <div class="row row-cols-1 row-cols-md-4 g-4">
-        <div class="col">
-            <div class="card text-white bg-primary mb-3 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Total de Animais</h5>
-                    <p class="card-text fs-2 fw-bold">{{ total_animais }}</p>
-                    <p class="card-text small">Ativos no Rebanho</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card text-dark bg-info-subtle mb-3 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Fêmeas (Matrizes)</h5>
-                    <p class="card-text fs-2 fw-bold">{{ total_femeas }}</p>
-                    <p class="card-text small">Ativos no Rebanho</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card text-dark bg-secondary-subtle mb-3 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Machos (Touros/Garrotes)</h5>
-                    <p class="card-text fs-2 fw-bold">{{ total_machos }}</p>
-                    <p class="card-text small">Ativos no Rebanho</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card text-white bg-danger mb-3 text-center border-3 border-danger">
-                <div class="card-body">
-                    <h5 class="card-title">🚨 Alerta Genealogia</h5>
-                    <p class="card-text fs-2 fw-bold">{{ alerta_genealogia }}</p>
-                    <p class="card-text small">Animais sem Mãe Registrada</p>
+    <div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total de Animais</div>
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="h2 mb-0 fw-bold text-gray-800">{{ total_animais }}</div>
+                        <div class="text-muted small">Ativos no Rebanho</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-layer-group fa-2x text-gray-200"></i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Fêmeas (Matrizes)</div>
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="h2 mb-0 fw-bold text-gray-800">{{ total_femeas }}</div>
+                        <div class="text-muted small">Produção ativa</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-venus fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 border-start border-secondary border-4 shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Machos (Reprodutores)</div>
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="h2 mb-0 fw-bold text-gray-800">{{ total_machos }}</div>
+                        <div class="text-muted small">Touros e Garrotes</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-mars fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 border-start border-danger border-4 shadow-sm h-100 {% if alerta_genealogia > 0 %}bg-danger-subtle{% endif %}">
+            <div class="card-body py-3">
+                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">🚨 Alerta Genealogia</div>
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="h2 mb-0 fw-bold text-danger">{{ alerta_genealogia }}</div>
+                        <div class="text-muted small">Sem Mãe Registrada</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-xs { font-size: 0.75rem; letter-spacing: 0.05rem; }
+    .text-gray-200 { color: #eaecf4; } /* Ícone discreto ao fundo */
+    .border-start { border-left-width: 4px !important; }
+</style>
 
     <hr class="my-2">
 
@@ -78,7 +115,7 @@
                         {% for animal in alerta_desmame %}
                         <tr>
                             <td>
-                                <a href="{% url 'admin:ControleRebanho_animal_change' animal.identificacao.pk %}" class="fw-bold text-decoration-none">
+                                <a href="{% url 'rebanho:animal_detail' animal.pk %}" class="fw-bold text-decoration-none">
                                     {{ animal.identificacao }}
                                 </a>
                             </td>

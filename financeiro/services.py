@@ -1,12 +1,75 @@
 # core/services.py
-from django.db.models import Sum
+from django.db.models import Max, Min, Sum
 from django.utils import timezone
 from django.db.models.functions import Coalesce
 from decimal import Decimal
 
-from financeiro.models import CustoAnimalDetalhe, RegistroDeCusto, Venda
+from .models import CustoAnimalDetalhe, Despesa, RegistroDeCusto, Venda
 from manejo.models import Pesagem
 from rebanho.models import Animal, BaixaAnimal
+from django.db.models.functions import TruncMonth
+from collections import defaultdict
+
+
+def obter_fluxo_de_caixa():
+    # 1. Agrega as Entradas (Vendas) por mês
+    entradas_query = Venda.objects.annotate(
+        mes=TruncMonth('data_venda')
+    ).values('mes').annotate(total=Sum('valor_total')).order_by('mes')
+
+    # 2. Agrega as Saídas (Despesas) por mês
+    saidas_query = Despesa.objects.annotate(
+        mes=TruncMonth('data_pagamento')
+    ).values('mes').annotate(total=Sum('valor')).order_by('mes')
+
+    # 3. Organiza os dados em um dicionário para facilitar a mesclagem
+    fluxo = defaultdict(lambda: {'entradas': 0, 'saidas': 0, 'saldo': 0})
+
+    for e in entradas_query:
+        fluxo[e['mes']]['entradas'] = float(e['total'])
+
+    for s in saidas_query:
+        fluxo[s['mes']]['saidas'] = float(s['total'])
+
+    # 4. Calcula o saldo final de cada mês
+    fluxo_ordenado = []
+    for mes in sorted(fluxo.keys()):
+        item = fluxo[mes]
+        item['mes'] = mes
+        item['saldo'] = item['entradas'] - item['saidas']
+        fluxo_ordenado.append(item)
+
+    return fluxo_ordenado
+
+
+def calcular_performance_rebanho(ano_filtro):
+    ganho_total_real = 0
+    peso_estimado_ua = 0
+    
+    # 1. Filtramos apenas animais ativos
+    animais_ativos = Animal.objects.filter(situacao='VIVO') 
+
+
+    for animal in animais_ativos:
+        # Buscamos as pesagens deste animal no ano específico
+        pesagens_do_bicho = Pesagem.objects.filter(
+            animal=animal, 
+            data_pesagem__year=ano_filtro
+        )
+
+        if pesagens_do_bicho.exists():
+            # Se houve pesagem, calculamos o ganho real (Max - Min)
+            dados = pesagens_do_bicho.aggregate(
+                max_p=Max('peso_kg'), 
+                min_p=Min('peso_kg')
+            )
+            ganho = (dados['max_p'] or 0) - (dados['min_p'] or 0)
+            ganho_total_real += ganho
+        else:
+            
+            peso_estimado_ua += (animal.ua_atual * 450)
+
+    return ganho_total_real, peso_estimado_ua
 
 
 class CalculadorIndices:
@@ -26,18 +89,40 @@ class CalculadorIndices:
         # 3. Cálculo do Índice R$ / UA / Mês
         custo_por_ua = float(total_despesas) / total_ua_fazenda
 
-        # 4. Custo da @ Produzida
-        ganho_total_kg = Pesagem.objects.filter(
-            data_pesagem__year=ano_atual
-        ).aggregate(total=Sum('peso_kg'))['total'] or 0
+        # 3. Cálculo de Ganho de Peso (Onde estava o erro)
+        # Vamos pegar cada animal que foi pesado no ano e subtrair o menor peso do maior peso
+        # ganho_total_kg = 0
+        # pesagens_ano = Pesagem.objects.filter(data_pesagem__year=ano_filtro)
         
+        # # Pegamos os IDs dos animais que passaram pela balança este ano
+        # ids_animais_pesados = pesagens_ano.values_list('animal_id', flat=True).distinct()
+        
+        # for animal_id in ids_animais_pesados:
+        #     pesagens_do_bicho = pesagens_ano.filter(animal_id=animal_id)
+        #     # Diferença entre o maior peso registrado no ano e o menor
+        #     max_p = pesagens_do_bicho.aggregate(Max('peso_kg'))['peso_kg__max'] or 0
+        #     min_p = pesagens_do_bicho.aggregate(Min('peso_kg'))['peso_kg__min'] or 0
+        #     ganho_total_kg += (max_p - min_p)
+        
+        ganho_total_real, peso_estimado_ua = calcular_performance_rebanho(ano_filtro)
+        ganho_total_kg = ganho_total_real + peso_estimado_ua
+
+        # Transformando quilos ganhos em Arrobas (@)
         total_arrobas = float(ganho_total_kg) / 30
+
+        # 5. Custo da @ Produzida 
+        # (Quanto custou cada arroba que "brotou" no pasto através do ganho de peso)
         custo_arroba = float(total_despesas) / total_arrobas if total_arrobas > 0 else 0
+
+        # 6. Produção por UA (Eficiência biológica)
+        # Quantas arrobas cada UA produziu no ano
+        arrobas_por_ua = total_arrobas / total_ua_fazenda
 
         return {
             'custo_por_ua': custo_por_ua,
             'custo_arroba': custo_arroba,
             'total_ua': total_ua_fazenda,
+            'arrobas_por_ua': arrobas_por_ua,
             'total_despesas': total_despesas,
             'total_arrobas': total_arrobas,
         }

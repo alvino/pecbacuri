@@ -39,13 +39,13 @@
         </div>
 
         <div class="col-md-auto">
-            <a href="{% url 'animal_list' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'rebanho:animal_list' %}" class="btn btn-outline-secondary">
                 Limpar Filtro
             </a>
         </div>
 
         <div class="col-md-auto">
-            <a href="{% url 'animal_create' %}" class="btn btn-success">Adicionar Novo
+            <a href="{% url 'rebanho:animal_create' %}" class="btn btn-success">Adicionar Novo
                 Animal</a>
         </div>
 
@@ -70,7 +70,7 @@
         {% for animal in animais %}
         <tr class="position-relative"> 
             <td>
-                <a href="{% url 'animal_detail' pk=animal.pk %}" class="text-decoration-none fw-bold stretched-link">
+                <a href="{% url 'rebanho:animal_detail' pk=animal.pk %}" class="text-decoration-none fw-bold stretched-link">
                     {{ animal.identificacao }}
                 </a>
             </td>
@@ -85,7 +85,7 @@
             <td>{{ animal.data_nascimento|timesince|cut:" ago" }}</td>
             <td>
                 {% if animal.mae %}
-                <a href="{% url 'animal_detail' pk=animal.mae.pk %}" class="position-relative" style="z-index: 2;">
+                <a href="{% url 'rebanho:animal_detail' pk=animal.mae.pk %}" class="position-relative" style="z-index: 2;">
                     {{ animal.mae.identificacao }}
                 </a>
                 {% else %}

@@ -162,7 +162,7 @@ class Animal(models.Model):
     def get_absolute_url(self):
         """ Retorna a URL para a instância do objeto (AnimalDetailView). """
         # O 'pk=self.pk' usa a chave primária para construir a URL
-        return reverse('animal_detail', kwargs={'pk': self.pk}) 
+        return reverse('rebanho:animal_detail', kwargs={'pk': self.pk}) 
         
         # Se você estivesse usando slug, seria:
         # return reverse('animal_detail', kwargs={'animal_slug': self.slug})

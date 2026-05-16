@@ -75,7 +75,7 @@
         
         <div class="tab-pane fade show active" id="info-pane" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
             <h3>Informações Gerais</h3>
-            <a href="{% url 'animal_update' animal.id %}" class="btn btn-primary">
+            <a href="{% url 'rebanho:animal_update' animal.id %}" class="btn btn-primary">
                 <i class="bi bi-calendar-event"></i> Alterar Dados
             </a>
              
@@ -89,13 +89,13 @@
             <p><strong>Genealogia:</strong> 
                 Mãe 
                 {% if animal.mae %}
-                    <a href="{% url 'animal_detail' pk=animal.mae.pk %}">{{ animal.mae.identificacao }}</a>
+                    <a href="{% url 'rebanho:animal_detail' pk=animal.mae.pk %}">{{ animal.mae.identificacao }}</a>
                 {% else %}
                     N/A
                 {% endif %}, 
                 Pai 
                 {% if animal.pai %}
-                    <a href="{% url 'animal_detail' pk=animal.pai.pk %}">{{ animal.pai.identificacao }}</a>
+                    <a href="{% url 'rebanho:animal_detail' pk=animal.pai.pk %}">{{ animal.pai.identificacao }}</a>
                 {% else %}
                     N/A
                 {% endif %}
@@ -212,7 +212,7 @@
                         <td>{{ repro.data_cio }}</td>
                         <td>{{ repro.get_tipo_display }}</td>
                         {% if repro.touro.pk %}
-                        <td><a href="{% url 'animal_detail' pk=repro.touro.pk %}">{{ repro.touro.identificacao }}</a></td>
+                        <td><a href="{% url 'rebanho:animal_detail' pk=repro.touro.pk %}">{{ repro.touro.identificacao }}</a></td>
                         {% else %}
                         <td>{{ repro.codigo_semen }}</td>
                         {% endif %}
