@@ -86,7 +86,7 @@ class DespesaForm(forms.ModelForm):
     class Meta:
         model = Despesa
         # Incluímos apenas os campos que o usuário deve preencher manualmente
-        fields = ['data_pagamento', 'descricao', 'valor', 'categoria', 'tipo']
+        fields = ['data_pagamento', 'descricao', 'valor_total', 'categoria', 'tipo', 'observacoes']
         initial = {'data_pagamento': timezone.localdate()}
        
         widgets = {

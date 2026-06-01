@@ -55,7 +55,7 @@
             </td>
             <td><span class="badge bg-light text-dark border">{{ custo.tipo_custo }}</span></td>
             <td class="text-end fw-bold text-danger">
-                R$ {{ custo.valor|floatformat:2 }}
+                R$ {{ custo.valor_total|floatformat:2 }}
             </td>
         </tr>
         {% empty %}

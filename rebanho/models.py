@@ -41,7 +41,6 @@ class Lote(models.Model):
     class Meta:
         verbose_name = "Lote de Manejo"
         verbose_name_plural = "Lotes de Manejo"
-        db_table = 'ControleRebanho_lote'  # Especifica o nome da tabela no banco de dados
 
 
 class AnimalManager(models.Manager):
@@ -260,7 +259,6 @@ class Animal(models.Model):
     class Meta:
         verbose_name = "Animal"
         verbose_name_plural = "Animais"
-        db_table = 'ControleRebanho_animal'  # Especifica o nome da tabela no banco de dados
 
 
 class BaixaAnimal(models.Model):
@@ -293,7 +291,6 @@ class BaixaAnimal(models.Model):
     class Meta:
         verbose_name = "Baixa de Animal"
         verbose_name_plural = "Baixas de Animais"
-        db_table = 'ControleRebanho_baixaanimal'  # Especifica o nome da tabela no banco de dados
 
     def __str__(self):
         return f"Baixa de {self.animal.identificacao} por {self.get_causa_display()}"

@@ -202,100 +202,113 @@
         </div>
     </div>
 
-    <div class="row g-4 my-2">
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-light">
-                    Status Reprodutivo (DG)
+    
+
+<div class="row g-4">
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 border-start border-primary border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small mb-1">Animais Vendidos</h6>
+                        <h2 class="fw-bold mb-0">{{ total_vendido }}</h2>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-truck text-primary fs-4"></i>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <canvas id="graficoStatusReprodutivo"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-light">
-                    Distribuição Geral (Ativos vs. Saídas)
-                </div>
-                <div class="card-body">
-                    <canvas id="graficoDistribuicaoRebanho"></canvas>
+                <div class="mt-2">
+                    <span class="text-primary small fw-medium">
+                         Faturamento: R$ {{ faturamento_vendas|floatformat:2 }}
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 border-start border-secondary border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small mb-1">Baixas (Mortes/Descarte)</h6>
+                        <h2 class="fw-bold mb-0">{{ total_baixa }}</h2>
+                    </div>
+                    <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-graph-down-arrow text-secondary fs-4"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="badge bg-danger-soft text-danger">
+                        Taxa de Mortalidade: {{ taxa_mortalidade }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     
+<div class="container-fluid py-4">
+    <div class="row g-3">
 
-</div> {% comment %} 
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 bg-light">
+                <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-calendar3 text-primary fs-2 mb-2"></i>
+                    <h4 class="fw-bold text-dark mb-0 text-uppercase">{{ nome_estacao }}</h4>
+                    <p class="text-muted small mb-0 tracking-wider">Estação Ativa</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Matrizes Prenhes</h6>
+                    <div class="mb-3">
+                        <span class="display-6 fw-bold text-success">{{ prenhezes }}</span>
+                    </div>
+                    <div class="small fw-bold text-success bg-success bg-opacity-10 rounded-pill py-1 px-3 d-inline-block">
+                        {{ taxa_prenhez }}% Eficiência
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Matrizes Vazias</h6>
+                    <div class="mb-3">
+                        <span class="display-6 fw-bold text-danger">{{ vazias }}</span>
+                    </div>
+                    <div class="text-muted small">Aguardando protocolo</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Aguardando DG</h6>
+                    <div class="mb-3">
+                        <span class="display-6 fw-bold text-warning">{{ nao_verificadas }}</span>
+                    </div>
+                    <div class="text-muted small">Toques pendentes</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</div> 
+{% comment %} 
     fim container
 {% endcomment %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-
-<script>
-    // 1. GRÁFICO DE STATUS REPRODUTIVO (Tipo Rosquinha/Donut)
-    const ctxReprodutivo = document.getElementById('graficoStatusReprodutivo');
-    new Chart(ctxReprodutivo, {
-        type: 'doughnut',
-        data: {
-            labels: ['Prenhes', 'Vazias', 'Aguardando DG'],
-            datasets: [{
-                label: 'Matrizes',
-                data: [{{ prenhezes }}, {{ vazias }}, {{ nao_verificadas }}],
-        backgroundColor: [
-        'rgba(40, 167, 69, 0.8)', // Verde
-        'rgba(220, 53, 69, 0.8)',  // Vermelho
-        'rgba(255, 193, 7, 0.8)'   // Amarelo
-    ],
-        hoverOffset: 4
-                }]
-            },
-        options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top',
-            },
-            title: {
-                display: false
-            }
-        }
-    }
-        });
-
-    // 2. GRÁFICO DE DISTRIBUIÇÃO DO REBANHO (Tipo Barra Simples)
-    const ctxDistribuicao = document.getElementById('graficoDistribuicaoRebanho');
-    new Chart(ctxDistribuicao, {
-        type: 'bar',
-        data: {
-            labels: ['Ativos', 'Vendidos', 'baixa'],
-            datasets: [{
-                label: 'Total de Animais',
-                data: [{{ total_animais }}, {{ total_vendido }}, {{ total_baixa }}],
-        backgroundColor: [
-        'rgba(0, 123, 255, 0.8)',  // Azul para Ativo
-        'rgba(255, 165, 0, 0.8)', // Laranja para Vendido
-        'rgba(108, 117, 125, 0.8)' // Cinza para Descarte
-    ],
-        borderWidth: 1
-                }]
-            },
-        options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        },
-        plugins: {
-            legend: {
-                display: false
-            }
-        }
-    }
-        });
-</script>
 
 
 {% endblock %}

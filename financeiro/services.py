@@ -14,13 +14,13 @@ from collections import defaultdict
 def obter_fluxo_de_caixa():
     # 1. Agrega as Entradas (Vendas) por mês
     entradas_query = Venda.objects.annotate(
-        mes=TruncMonth('data_venda')
+        mes=TruncMonth('data_entrada')
     ).values('mes').annotate(total=Sum('valor_total')).order_by('mes')
 
     # 2. Agrega as Saídas (Despesas) por mês
     saidas_query = Despesa.objects.annotate(
         mes=TruncMonth('data_pagamento')
-    ).values('mes').annotate(total=Sum('valor')).order_by('mes')
+    ).values('mes').annotate(total=Sum('valor_total')).order_by('mes')
 
     # 3. Organiza os dados em um dicionário para facilitar a mesclagem
     fluxo = defaultdict(lambda: {'entradas': 0, 'saidas': 0, 'saldo': 0})
@@ -82,8 +82,8 @@ class CalculadorIndices:
 
         # 2. Total de Despesas no mês
         ano_atual = ano_filtro if ano_filtro is not None else timezone.now().year
-        total_despesas = RegistroDeCusto.objects.filter(data_custo__year=ano_atual).aggregate(
-            total=Sum('valor')
+        total_despesas = RegistroDeCusto.objects.filter(data_pagamento__year=ano_atual).aggregate(
+            total=Sum('valor_total')
         )['total'] or 0
 
         # 3. Cálculo do Índice R$ / UA / Mês
@@ -132,13 +132,13 @@ class CalculadorIndices:
         # CALCULAR MÉTRICAS GERAIS
         
         custos_totais = RegistroDeCusto.objects.filter(
-            data_custo__year=ano_filtro
+            data_pagamento__year=ano_filtro
         ).aggregate(
-            total=Coalesce(Sum('valor'), Decimal(0))
+            total=Coalesce(Sum('valor_total'), Decimal(0))
         )['total']
 
         receita_vendas = Venda.objects.filter(
-            data_venda__year=ano_filtro
+            data_entrada__year=ano_filtro
         ).aggregate(
             total=Coalesce(Sum('valor_total'), Decimal(0))
         )['total']
@@ -155,7 +155,7 @@ class CalculadorIndices:
         # Identifica animais que saíram (vendidos, abatidos ou mortos) no ano
         animais_saidos_ids = set()
         
-        vendas_periodo = Venda.objects.filter(data_venda__year=ano_filtro)
+        vendas_periodo = Venda.objects.filter(data_entrada__year=ano_filtro)
         for v in vendas_periodo:
             animais_saidos_ids.add(v.animal_id)
 
@@ -184,8 +184,8 @@ class CalculadorIndices:
                 try:
                     venda = Venda.objects.get(animal=animal)
                     receita_animal = venda.valor_total
-                    destino = f"Vendido a {venda.comprador}"
-                    data_saida = venda.data_venda
+                    destino = f"Vendido a {venda.origem_pagador}"
+                    data_saida = venda.data_entrada
                 except Venda.DoesNotExist:
                      destino = "VENDIDO (Registro de Venda Ausente)"
                 

@@ -37,7 +37,6 @@ class Pasto(models.Model):
     class Meta:
         verbose_name = "Pasto/Piquete"
         verbose_name_plural = "Pastos/Piquetes"
-        db_table = 'ControleRebanho_pasto'
 
 
 class MovimentacaoPasto(models.Model):
@@ -45,7 +44,8 @@ class MovimentacaoPasto(models.Model):
     animal = models.ForeignKey(
         'rebanho.Animal', 
         on_delete=models.CASCADE, 
-        related_name='movimentacoes_pasto'
+        related_name='movimentacoes_pasto',
+        null=True, blank=True,
     )
     pasto_origem = models.ForeignKey(
         'infraestrutura.Pasto', 
@@ -78,7 +78,6 @@ class MovimentacaoPasto(models.Model):
         verbose_name = "Movimentação de Pasto"
         verbose_name_plural = "Movimentações de Pasto"
         ordering = ['-data_entrada']
-        db_table = 'ControleRebanho_movimentacaopasto'
 
     def __str__(self):
         saida_str = f"até {self.data_saida}" if self.data_saida else " - ATUAL"

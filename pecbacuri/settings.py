@@ -177,3 +177,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'             # Nome da URL da página de login
 LOGIN_REDIRECT_URL = 'dashboard' # Para onde vai após logar
 LOGOUT_REDIRECT_URL = 'login'    # Para onde vai após sair
+
+IMPORT_EXPORT_ENCODING = 'utf-8-sig'

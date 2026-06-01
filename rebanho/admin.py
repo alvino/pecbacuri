@@ -1,15 +1,9 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin # 1. Importar o mixin
-from import_export import resources
+from import_export import resources, fields
+from import_export.widgets import ForeignKeyWidget
 from .models import Animal,  Lote, BaixaAnimal
 from .actions import mover_pasto_animais, mudar_lote_animais, mudar_pasto_lote
-
-
-@admin.register(BaixaAnimal)
-class BaixaAnimalAdmin(admin.ModelAdmin):
-    list_display = ('animal', 'data_baixa', 'causa')
-    search_fields = ('animal__identificacao', 'observacoes')
-    list_filter = ('causa', 'data_baixa')
 
 
 class AnimalResource(resources.ModelResource):
@@ -25,11 +19,35 @@ class LoteResource(resources.ModelResource):
         model = Lote
         fields = ('nome','pasto_atual','data_entrada','finalidade')
         import_id_fields = ['nome']
-    
+
+
+class BaixaAnimalResource(resources.ModelResource):
+    # Aqui está o segredo:
+    # Dizemos que o campo 'animal' na planilha deve ser buscado 
+    # no modelo Animal usando o campo 'identificacao' (ou o nome do campo de brinco que você usa)
+    animal = fields.Field(
+        column_name='animal',
+        attribute='animal',
+        widget=ForeignKeyWidget(Animal, 'identificacao') # <-- Troque 'identificacao' pelo nome exato do seu campo de brinco
+    )
+
+    class Meta:
+        model = BaixaAnimal
+        import_id_fields = ('id',) 
+        fields = ('id', 'animal', 'data_baixa', 'causa', 'observacoes')
+
+
+@admin.register(BaixaAnimal)
+class BaixaAnimalAdmin(ImportExportModelAdmin):
+    resource_class = BaixaAnimalResource
+
+    list_display = ('animal', 'data_baixa', 'causa')
+    search_fields = ('animal__identificacao', 'observacoes')
+    list_filter = ('causa', 'data_baixa')
+
 
 @admin.register(Animal)
 class AnimalAdmin(ImportExportModelAdmin):
-
     resource_class = AnimalResource
 
     actions = [mover_pasto_animais,mudar_lote_animais]

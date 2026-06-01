@@ -101,7 +101,7 @@ class DashboardView(TemplateView):
         # 4. Dados para o Gráfico de Distribuição do Rebanho
         total_vendido = Venda.objects.filter(
             animal__situacao='VENDIDO',
-            data_venda__year=ano_atual
+            data_entrada__year=ano_atual
             ).count()
         total_baixa = BaixaAnimal.objects.filter(
             animal__situacao='MORTO',

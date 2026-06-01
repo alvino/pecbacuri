@@ -20,9 +20,9 @@ def sync_despesa_to_registro_de_custo(sender, instance, created, **kwargs):
     if created or not instance.registro_de_custo:
         # Cria um novo RegistroDeCusto
         registro = RegistroDeCusto.objects.create(
-            data_custo=instance.data_pagamento,
+            data_pagamento=instance.data_pagamento,
             descricao=desc_registro,
-            valor=instance.valor,
+            valor_total=instance.valor_total,
             tipo_custo=tipo_custo_obj 
         )
         # Linka a Despesa ao novo RegistroDeCusto
@@ -32,9 +32,9 @@ def sync_despesa_to_registro_de_custo(sender, instance, created, **kwargs):
     else:
         # Atualiza o RegistroDeCusto existente
         registro = instance.registro_de_custo
-        registro.data_custo = instance.data_pagamento
+        registro.data_pagamento = instance.data_pagamento
         registro.descricao = desc_registro
-        registro.valor = instance.valor
+        registro.valor_total = instance.valor_total
         registro.tipo_custo = tipo_custo_obj 
         registro.save()
 
@@ -44,20 +44,20 @@ def alocar_custo_por_pasto(sender, instance, created, **kwargs):
     # 1. Verifica se o custo se aplica a um pasto
     if instance.pasto and created:
         pasto_destino = instance.pasto
-        data_custo = instance.data_custo
-        valor_total = instance.valor
+        data_pagamento = instance.data_pagamento
+        valor_total = instance.valor_total
         
         # 2. Lógica para encontrar os animais no pasto na data do custo
         # Um animal estava no pasto se:
         # - Ele tem uma movimentação cujo destino é o pasto_destino
-        # - A data de entrada na movimentação é <= data_custo
-        # - A data de saída é > data_custo OU data_saida é nula (movimentação aberta)
+        # - A data de entrada na movimentação é <= data_pagamento
+        # - A data de saída é > data_pagamento OU data_saida é nula (movimentação aberta)
         
         animais_no_pasto = Animal.objects.filter(
             movimentacoes_pasto__pasto_destino=pasto_destino,
-            movimentacoes_pasto__data_entrada__lte=data_custo
+            movimentacoes_pasto__data_entrada__lte=data_pagamento
         ).filter(
-            Q(movimentacoes_pasto__data_saida__gt=data_custo) | Q(movimentacoes_pasto__data_saida__isnull=True)
+            Q(movimentacoes_pasto__data_saida__gt=data_pagamento) | Q(movimentacoes_pasto__data_saida__isnull=True)
         ).distinct()
         
         quantidade_animais = animais_no_pasto.count()
@@ -85,7 +85,7 @@ def alocar_custo_por_pasto(sender, instance, created, **kwargs):
             CustoAnimalDetalhe.objects.create(
                 registro_de_custo=instance,
                 animal=instance.animal,
-                valor_alocado=instance.valor
+                valor_alocado=instance.valor_total
             )
 
 

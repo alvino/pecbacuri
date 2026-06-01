@@ -28,13 +28,13 @@ import json
 def dashboard_fluxo_caixa(request):
     # Agrupar Vendas por mês
     vendas_mes = Venda.objects.annotate(
-        mes=TruncMonth('data_venda')
+        mes=TruncMonth('data_entrada')
     ).values('mes').annotate(total=Sum('valor_total')).order_by('mes')
 
     # Agrupar Despesas por mês
     despesas_mes = Despesa.objects.annotate(
         mes=TruncMonth('data_pagamento')
-    ).values('mes').annotate(total=Sum('valor')).order_by('mes')
+    ).values('mes').annotate(total=Sum('valor_total')).order_by('mes')
 
     # Unificar os dados em um dicionário estruturado
     dados_fluxo = defaultdict(lambda: {'entradas': 0, 'saidas': 0})
@@ -87,7 +87,7 @@ class RegistroCustoListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # Pega os dados e aplica o filtro
-        queryset = RegistroDeCusto.objects.all().order_by('-data_custo')
+        queryset = RegistroDeCusto.objects.all().order_by('-data_pagamento')
         self.filter = RegistroCustoFilter(self.request.GET, queryset=queryset)
         return self.filter.qs
 
@@ -96,7 +96,7 @@ class RegistroCustoListView(LoginRequiredMixin, ListView):
         context['filter'] = self.filter
         
         # Soma total dos valores filtrados para o rodapé
-        total = self.filter.qs.aggregate(Sum('valor'))['valor__sum']
+        total = self.filter.qs.aggregate(Sum('valor_total'))['valor_total__sum']
         context['total_geral'] = total or 0
         return context
 
@@ -141,7 +141,7 @@ class VendaCreateView(LoginRequiredMixin,FormView):
     
     def form_valid(self, form):
         """Executa a movimentação no banco de dados"""
-        data_venda = form.cleaned_data['data_venda']
+        data_entrada = form.cleaned_data['data_entrada']
         peso_venda = form.cleaned_data['peso_venda']
         valor_total = form.cleaned_data['valor_total']
         comprador = form.cleaned_data['comprador']
@@ -152,7 +152,7 @@ class VendaCreateView(LoginRequiredMixin,FormView):
         for animal in animais:
             Venda.objects.create(
                 animal=animal,
-                data_venda=data_venda,
+                data_entrada=data_entrada,
                 peso_venda=peso_venda,
                 valor_total=valor_total,
                 comprador=comprador,
@@ -205,13 +205,13 @@ class DashboardFinanceiroCBV(TemplateView):
         # O Django faz: SELECT categoria, SUM(valor) GROUP BY categoria
         custos_por_categoria = (
             RegistroDeCusto.objects.values('tipo_custo__nome')
-            .annotate(total=Sum('valor'))
+            .annotate(total=Sum('valor_total'))
             .order_by('-total')
         )
 
         
         # 4. Adicionar ao Contexto# 2. (Opcional) Soma total para calcular porcentagens no template
-        total_geral = RegistroDeCusto.objects.aggregate(Sum('valor'))['valor__sum'] or 0
+        total_geral = RegistroDeCusto.objects.aggregate(Sum('valor_total'))['valor_total__sum'] or 0
 
         context.update({
             'ano_filtro': ano_filtro,
@@ -275,7 +275,7 @@ class RelatorioDesempenhoPastoView(LoginRequiredMixin, TemplateView):
                     # Custo Alocado
                     custo_periodo = CustoAnimalDetalhe.objects.filter(
                         animal=animal,
-                        registro_de_custo__data_custo__range=[data_inicio, data_fim]
+                        registro_de_custo__data_pagamento__range=[data_inicio, data_fim]
                     ).aggregate(total=Sum('valor_alocado'))['total'] or 0.0
                     
                     if gpmd_medio is not None:

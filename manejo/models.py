@@ -35,7 +35,6 @@ class TarefaManejo(models.Model):
         verbose_name = "Tarefa de Manejo"
         verbose_name_plural = "Tarefas de Manejo"
         ordering = ['data_prevista', 'titulo']
-        db_table = 'ControleRebanho_tarefamanejo'  # Especifica o nome da tabela no banco de dados
 
 
 class Reproducao(models.Model):
@@ -140,7 +139,6 @@ class Reproducao(models.Model):
     class Meta:
         verbose_name = "Manejo Reprodutivo"
         verbose_name_plural = "Manejos Reprodutivos"
-        db_table = 'ControleRebanho_reproducao'  # Especifica o nome da tabela no banco de dados
 
 
 class TratamentoSaude(models.Model):
@@ -174,7 +172,6 @@ class TratamentoSaude(models.Model):
     class Meta:
         verbose_name = "Tratamento de Saúde"
         verbose_name_plural = "Tratamentos de Saúde"
-        db_table = 'ControleRebanho_tratamentosaude'  # Especifica o nome da tabela no banco de dados
 
 
 class Pesagem(models.Model):
@@ -205,5 +202,4 @@ class Pesagem(models.Model):
         ordering = ['data_pesagem']
         verbose_name = "Pesagem"
         verbose_name_plural = "Controle de Peso"
-        db_table = 'ControleRebanho_pesagem'  # Especifica o nome da tabela no banco de dados
 
