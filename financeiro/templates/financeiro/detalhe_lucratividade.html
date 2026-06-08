@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load l10n %}
+{% block title %}Lucratividade por Animal - Ano {{ ano_filtro }}{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h1 class="display-6 fw-bold text-primary">
+            <i class="fas fa-cow me-2"></i>Lucratividade por Animal
+        </h1>
+       
+    </div>
+    <div class="col-md-5">
+        <form method="GET" action="" class="d-flex justify-content-md-end gap-2 mt-3 mt-md-0">
+            <div class="input-group" style="max-width: 200px;">
+                <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
+                <select name="ano" class="form-select" onchange="this.form.submit()">
+                    {% localize off %}
+                        {% for ano in anos_disponiveis %}
+                            <option value="{{ ano }}" {% if ano == ano_filtro %}selected{% endif %}>
+                                {{ ano }}
+                            </option>
+                        {% endfor %}
+                    {% endlocalize %}
+                </select>
+            </div>
+            <a href="{% url 'dashboard_financeiro' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar ao Dashboard
+            </a>
+        </form>
+    </div>
+</div>
+
+<hr class="mb-4 text-muted opacity-25">
+
+<div class="card shadow-sm border-0 rounded-3 mb-5">
+    <div class="card-header bg-white py-3 border-bottom-0 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+        <h5 class="card-title text-secondary fw-bold mb-0">Animais Baixados/Vendidos ({{ detalhe_lucratividade|length }})</h5>
+        <div class="input-group input-group-sm" style="max-width: 300px;">
+            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+            <input type="text" id="inputBusca" class="form-control" placeholder="Buscar por identificação...">
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle mb-0" id="tabelaLucratividade">
+            <thead class="table-light">
+                <tr>
+                    <th>Animal</th>
+                    <th>Data de Saída</th>
+                    <th>Destino (Venda ou Baixa)</th>
+                    <th class="text-end">Custo Acumulado (R$)</th>
+                    <th class="text-end">Receita (R$)</th>
+                    <th class="text-end">Lucro/Prejuízo (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in detalhe_lucratividade %}
+                <tr>
+                    <td><a href="{{ item.link }}" class="fw-bold text-decoration-none">{{ item.identificacao }}</a></td>
+                    <td>
+                        {% if item.data_saida %}
+                            {{ item.data_saida|date:"d/m/Y" }}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if 'Morte' in item.destino %}bg-danger text-white{% else %}bg-success text-white{% endif %} rounded-pill px-2 small">
+                            {{ item.destino }}
+                        </span>
+                    </td>
+                    <td class="text-end text-danger">R$ {{ item.custo_acumulado|floatformat:2|intcomma }}</td>
+                    <td class="text-end text-success">R$ {{ item.receita_animal|floatformat:2|intcomma }}</td>
+                    
+                    {% if item.lucro >= 0 %}
+                        <td class="text-end fw-bold text-success">R$ {{ item.lucro|floatformat:2|intcomma }}</td>
+                    {% else %}
+                        <td class="text-end fw-bold text-danger">R$ {{ item.lucro|floatformat:2|intcomma }}</td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fas fa-exclamation-circle fa-2x d-block mb-2 text-secondary"></i>
+                        Nenhum animal vendido, abatido ou com baixa foi registrado no ano de {{ ano_filtro }}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.getElementById('inputBusca').addEventListener('keyup', function() {
+        let filtro = this.value.toUpperCase();
+        let linhas = document.getElementById('tabelaLucratividade').getElementsByTagName('tr');
+        
+        for (let i = 1; i < linhas.length; i++) {
+            let colunaIdentificacao = linhas[i].getElementsByTagName('td')[0];
+            if (colunaIdentificacao) {
+                let texto = colunaIdentificacao.textContent || colunaIdentificacao.innerText;
+                linhas[i].style.display = texto.toUpperCase().indexOf(filtro) > -1 ? "" : "none";
+            }
+        }
+    });
+</script>
+{% endblock content %}

@@ -163,8 +163,7 @@ class AnimalDetailView( DetailView):
         context['custo_acumulado'] = custo_acumulado or 0.00
         
         # Detalhe dos custos (para a tabela)
-        context['custos_detalhados'] = animal.custos_alocados.all().order_by('-registro_de_custo__data_custo')
-
+        context['custos_detalhados'] = animal.custos_alocados.all().order_by('-registro_de_custo__data_pagamento')
 
         # --- 5. Histórico de Reprodução (Se existir o modelo) ---
         try:

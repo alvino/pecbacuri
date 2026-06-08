@@ -11,19 +11,57 @@ from django.contrib import messages
 from decimal import Decimal
 
 from financeiro.services import CalculadorIndices
-
-from .filters import DespesaFilter, RegistroCustoFilter
-
-from .forms import CategoriaDespesaForm, DespesaForm, VendaForm
 from infraestrutura.models import Pasto
 from rebanho.models import Animal, BaixaAnimal
+
+from .filters import DespesaFilter, RegistroCustoFilter
+from .forms import CategoriaDespesaForm, DespesaForm, VendaForm
 from .models import  CategoriaDespesa, Despesa, RegistroDeCusto, CustoAnimalDetalhe,  Venda
+from .services import obter_detalhe_lucratividade_animais 
 
 
 from django.shortcuts import render
 from django.db.models.functions import TruncMonth
 from collections import defaultdict
 import json
+
+
+
+
+class DetalheLucratividadeAnimaisView(TemplateView):
+    template_name = 'financeiro/detalhe_lucratividade.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # 1. Captura o ano atual do filtro
+        ano_str = self.request.GET.get('ano')
+        if ano_str and ano_str.isdigit():
+            ano_filtro = int(ano_str)
+        else:
+            ano_filtro = timezone.now().year
+            
+        # 2. Descobre dinamicamente os anos disponíveis no sistema
+        anos_vendas = Venda.objects.dates('data_entrada', 'year').values_list('data_entrada__year', flat=True)
+        anos_baixas = BaixaAnimal.objects.dates('data_baixa', 'year').values_list('data_baixa__year', flat=True)
+        
+        # Une as duas listas, remove duplicados e ordena (do mais recente para o mais antigo)
+        anos_disponiveis = sorted(list(set(anos_vendas) | set(anos_baixas)), reverse=True)
+        
+        # Caso o banco esteja vazio, garante ao menos o ano atual na lista
+        if not anos_disponiveis:
+            anos_disponiveis = [timezone.now().year]
+        
+        dados_lucratividade = obter_detalhe_lucratividade_animais(ano_filtro)
+
+        dados_lucratividade.sort(key=lambda x: x['destino'].lower())
+        # 3. Alimenta o contexto
+        context['detalhe_lucratividade'] = dados_lucratividade
+        context['ano_filtro'] = ano_filtro
+        context['anos_disponiveis'] = anos_disponiveis  # <-- Nova variável dinâmica
+        
+        return context
+
 
 def dashboard_fluxo_caixa(request):
     # Agrupar Vendas por mês

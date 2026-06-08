@@ -104,7 +104,7 @@
             <hr>
             
             <h3>Histórico de Pastagem</h3>
-            <a href="{% url 'movimentar_animais' %}?animal_id={{ animal.id }}" class="btn btn-sm btn-warning float-home">Movimentar Animal</a>
+            <a href="{% url 'rebanho:movimentar_animais' %}?animal_id={{ animal.id }}" class="btn btn-sm btn-warning float-home">Movimentar Animal</a>
 
             <table class="table table-striped table-sm">
                 <thead class="table-light">
@@ -240,7 +240,7 @@
                 <tbody>
                     {% for detalhe in custos_detalhados %}
                     <tr>
-                        <td>{{ detalhe.registro_de_custo.data_custo }}</td>
+                        <td>{{ detalhe.registro_de_custo.data_pagamento|date:"d/m/Y" }}</td>
                         <td>{{ detalhe.registro_de_custo.tipo_custo.nome }}</td>
                         <td>{{ detalhe.valor_alocado|floatformat:2|intcomma }}</td>
                         <td>{{ detalhe.registro_de_custo.descricao|truncatechars:50 }}</td>

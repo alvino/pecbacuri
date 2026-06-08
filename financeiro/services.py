@@ -11,6 +11,71 @@ from django.db.models.functions import TruncMonth
 from collections import defaultdict
 
 
+def obter_detalhe_lucratividade_animais(ano_filtro):
+    """
+    Retorna a listagem detalhada de lucratividade de cada animal que saiu no ano.
+    """
+    animais_saidos_ids = set()
+    
+    # Identifica animais que saíram (vendidos, abatidos ou mortos) no ano
+    vendas_periodo = Venda.objects.filter(data_entrada__year=ano_filtro)
+    for v in vendas_periodo:
+        animais_saidos_ids.add(v.animal_id)
+
+    baixas_periodo = BaixaAnimal.objects.filter(data_baixa__year=ano_filtro)
+    for b in baixas_periodo:
+        animais_saidos_ids.add(b.animal_id)
+        
+    animais_saidos = Animal.objects.filter(id__in=animais_saidos_ids)
+    
+    detalhe_lucratividade = []
+
+    for animal in animais_saidos:
+        custo_acumulado = CustoAnimalDetalhe.objects.filter(
+            animal=animal
+        ).aggregate(
+            total=Coalesce(Sum('valor_alocado'), Decimal(0))
+        )['total']
+        
+        receita_animal = Decimal(0)
+        destino = "N/A"
+        data_saida = None
+        
+        if animal.situacao == 'VENDIDO':
+            try:
+                venda = Venda.objects.get(animal=animal)
+                receita_animal = venda.valor_total
+                destino = f"Vendido a {venda.origem_pagador}"
+                data_saida = venda.data_entrada
+            except Venda.DoesNotExist:
+                destino = "VENDIDO (Registro de Venda Ausente)"
+
+        elif animal.situacao == 'MORTO': 
+            try:
+                baixa = BaixaAnimal.objects.get(animal=animal)
+                receita_animal = Decimal(0) 
+                destino = f"Morte ({baixa.get_causa_display()})"
+                data_saida = baixa.data_baixa
+            except BaixaAnimal.DoesNotExist:
+                destino = "MORTO (Registro de Baixa Ausente)"
+
+        lucro = receita_animal - custo_acumulado
+        
+        detalhe_lucratividade.append({
+            'identificacao': animal.identificacao,
+            'link': animal.get_absolute_url(),
+            'data_saida': data_saida,
+            'destino': destino,
+            'custo_acumulado': custo_acumulado,
+            'receita_animal': receita_animal,
+            'lucro': lucro,
+        })
+
+    # from datetime import date
+    # detalhe_lucratividade.sort(key=lambda x: x['data_saida'] if x['data_saida'] else date.min, reverse=True)
+    
+    return detalhe_lucratividade
+
 def obter_fluxo_de_caixa():
     # 1. Agrega as Entradas (Vendas) por mês
     entradas_query = Venda.objects.annotate(
@@ -70,6 +135,8 @@ def calcular_performance_rebanho(ano_filtro):
             peso_estimado_ua += (animal.ua_atual * 450)
 
     return ganho_total_real, peso_estimado_ua
+
+
 
 
 class CalculadorIndices:
@@ -148,73 +215,16 @@ class CalculadorIndices:
         receitas_totais = receita_vendas 
         lucro_geral = receitas_totais - custos_totais
         
-        # 3. LUCRO POR ANIMAL (Detalhamento)
-        
-        # ... (Mantendo a lógica complexa de animais_saidos_ids e o loop de detalhe_lucratividade) ...
-        
-        # Identifica animais que saíram (vendidos, abatidos ou mortos) no ano
-        animais_saidos_ids = set()
-        
-        vendas_periodo = Venda.objects.filter(data_entrada__year=ano_filtro)
-        for v in vendas_periodo:
-            animais_saidos_ids.add(v.animal_id)
 
-        baixas_periodo = BaixaAnimal.objects.filter(data_baixa__year=ano_filtro)
-        for b in baixas_periodo:
-            animais_saidos_ids.add(b.animal_id)
-            
-        animais_saidos = Animal.objects.filter(id__in=animais_saidos_ids)
-        
-        detalhe_lucratividade = []
-
-        for animal in animais_saidos:
-            
-            custo_acumulado = CustoAnimalDetalhe.objects.filter(
-                animal=animal
-            ).aggregate(
-                total=Coalesce(Sum('valor_alocado'), Decimal(0))
-            )['total']
-            
-            receita_animal = Decimal(0)
-            destino = "N/A"
-            data_saida = None
-            
-            # Lógica de Destino (VENDIDO, ABATIDO, MORTO) ...
-            if animal.situacao == 'VENDIDO':
-                try:
-                    venda = Venda.objects.get(animal=animal)
-                    receita_animal = venda.valor_total
-                    destino = f"Vendido a {venda.origem_pagador}"
-                    data_saida = venda.data_entrada
-                except Venda.DoesNotExist:
-                     destino = "VENDIDO (Registro de Venda Ausente)"
-                
-
-            elif animal.situacao == 'MORTO': 
-                try:
-                    baixa = BaixaAnimal.objects.get(animal=animal)
-                    receita_animal = Decimal(0) 
-                    destino = f"Morte ({baixa.get_causa_display()})"
-                    data_saida = baixa.data_baixa
-                except BaixaAnimal.DoesNotExist:
-                     destino = "MORTO (Registro de Baixa Ausente)"
-
-            lucro = receita_animal - custo_acumulado
-            
-            detalhe_lucratividade.append({
-                'identificacao': animal.identificacao,
-                'link': animal.get_absolute_url(),
-                'data_saida': data_saida,
-                'destino': destino,
-                'custo_acumulado': custo_acumulado,
-                'receita_animal': receita_animal,
-                'lucro': lucro,
-            })
+       # CHAMA A NOVA FUNÇÃO SEPARADA PARA PREENCHER O DETALHE CASO SEJA NECESSÁRIO AQUI
+        # detalhe_lucratividade = obter_detalhe_lucratividade_animais(ano_filtro)
         
         # 4. Adicionar ao Contexto
         return {
             'custos_totais': custos_totais,
             'receitas_totais': receitas_totais,
             'lucro_geral': lucro_geral,
-            'detalhe_lucratividade': detalhe_lucratividade,
+            # 'detalhe_lucratividade': detalhe_lucratividade,
         }
+    
+
