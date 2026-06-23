@@ -12,6 +12,7 @@ from datetime import date, timedelta
 
 from core.services import ZootecnicoService
 from financeiro.models import Venda
+from financeiro.services import CalculadorIndices
 from infraestrutura.models import Pasto
 from manejo.services import ReproducaoService
 from rebanho.models import Animal, BaixaAnimal
@@ -109,7 +110,9 @@ class DashboardView(TemplateView):
             ).count()
         
         indices_reproducao = ReproducaoService.obter_dados_estacao(ano_atual-1)
+        indices_financeiro = CalculadorIndices.obter_estatisticas_financeiras(ano_atual)
         context.update(indices_reproducao)
+        context.update(indices_financeiro)
 
         context.update({
             'total_animais': total_animais,

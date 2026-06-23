@@ -101,13 +101,33 @@ WSGI_APPLICATION = 'pecbacuri.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+import dj_database_url
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Verificação se o projeto está rodando no Render ou Local
+# O Render cria automaticamente a variável 'RENDER' no ambiente externo
+IS_IN_PRODUCTION = os.environ.get('RENDER', False)
+
+if IS_IN_PRODUCTION:
+    # Dentro do Render, ele pega a variável DATABASE_URL fornecida pelo painel
+    # Ou usa o Host Interno que você enviou
+    DATABASES = {
+        'default': dj_database_url.parse(
+            'postgresql://dbpecbacuri_user:0p8BFVGhe1CZfjGahmFiVKa2Y40VHGV5@dpg-d8euoqq8qa3s738chi6g-a/dbpecbacuri'
+        )
     }
-}
+else:
+    # Rodando na sua máquina local, usa o Host Externo para conseguir conectar remoto
+    # DATABASES = {
+    #     'default': dj_database_url.parse(
+    #         'postgresql://dbpecbacuri_user:0p8BFVGhe1CZfjGahmFiVKa2Y40VHGV5@dpg-d8euoqq8qa3s738chi6g-a.oregon-postgres.render.com/dbpecbacuri'
+    #     )
+    # }
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # dbBackup

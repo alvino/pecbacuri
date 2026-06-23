@@ -76,7 +76,7 @@
             </td>
             <td>
                 {% if animal.sexo == 'F' %}
-                <span class="badge bg-primary">Fêmea</span>
+                <span class="badge bg-danger">Fêmea</span>
                 {% else %}
                 <span class="badge bg-info">Macho</span>
                 {% endif %}
@@ -104,17 +104,41 @@
 
 {% comment %} Adicionando a navegação da paginação (se necessário) {% endcomment %}
 {% if is_paginated %}
-<nav aria-label="Navegação da Lista">
-    <ul class="pagination">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
-        {% endif %}
-        <li class="page-item active"><span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Próximo</a></li>
-        {% endif %}
-    </ul>
-</nav>
-{% endif %}
+    <nav aria-label="Navegação de página" class="mt-4">
+        <ul class="pagination justify-content-center">
+            
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1" title="Primeira Página">&laquo; Primeira</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo; Primeira</span></li>
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" title="Última Página">Última &raquo;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+                <li class="page-item disabled"><span class="page-link">Última &raquo;</span></li>
+            {% endif %}
+
+        </ul>
+    </nav>
+    {% endif %}
 
 {% endblock content %}

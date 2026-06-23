@@ -47,7 +47,7 @@
     <tbody>
         {% for custo in custos %}
         <tr class="position-relative">
-            <td>{{ custo.data_custo|date:"d/m/Y" }}</td>
+            <td>{{ custo.data_pagamento|date:"d/m/Y" }}</td>
             <td>
                 <a href="#" class="text-decoration-none fw-bold stretched-link text-dark">
                     {{ custo.descricao }}

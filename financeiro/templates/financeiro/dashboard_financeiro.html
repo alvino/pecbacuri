@@ -5,45 +5,30 @@
 {% block title %}Dashboard Financeiro & Lucratividade{% endblock %}
 
 {% block content %}
-<div class="row align-items-center mb-4">
-    <div class="col-lg-7 col-md-12 mb-3 mb-lg-0">
-        <h1 class="display-6 fw-bold text-primary">
-            <i class="fas fa-chart-line me-2"></i>Dashboard Financeiro
-        </h1>
-        <p class="lead text-muted mb-0">Análise de performance e lucratividade da Fazenda Bacuri.</p>
+
+<div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h1 class="h2 mb-0 text-dark fw-bold">
+                <i class="fas fa-chart-line me-2 text-muted"></i>Dashboard Financeiro
+            </h1>
+            <span class="badge bg-light text-secondary border">
+                Ano: {{ ano_filtro }}
+            </span>
+        </div>
+        <p class="small text-muted mb-0">Análise de performance e lucratividade da Fazenda Bacuri.</p>
     </div>
 
-    <div class="col-lg-5 col-md-12">
-        {% comment %}
-            <form method="get" class="row g-2 justify-content-lg-end align-items-end">
-                <div class="col-auto">
-                    <label for="ano" class="form-label small fw-bold text-secondary">Filtrar Ano</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
-                        <select class="form-select" id="ano" name="ano" onchange="this.form.submit()">
-                            {% localize off %}
-                            {% for ano in anos_disponiveis %}
-                                <option value="{{ ano }}" {% if ano|stringformat:"s" == ano_filtro %}selected{% endif %}>
-                                    {{ ano }}
-                                </option>
-                            {% endfor %}
-                            {% endlocalize %}
-                        </select>
-                    </div>
-                </div>
-                
-            </form>
-        {% endcomment %}
-        <h2 class="text-muted fw-bold mb-4">Resultado Geral em {{ ano_filtro }}</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+            <i class="fas fa-tachometer-alt me-2 text-muted"></i> Painel Geral
+        </a>
     </div>
 </div>
 
-<hr class="mb-5 text-muted opacity-25">
-    
 
-    
-    
-    
+
+
 
     <div class="row g-3 mb-4">
         <div class="col-xl col-md-4 col-sm-6">

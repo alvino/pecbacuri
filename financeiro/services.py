@@ -224,6 +224,7 @@ class CalculadorIndices:
             'custos_totais': custos_totais,
             'receitas_totais': receitas_totais,
             'lucro_geral': lucro_geral,
+            'receita_vendas': receita_vendas,
             # 'detalhe_lucratividade': detalhe_lucratividade,
         }
     

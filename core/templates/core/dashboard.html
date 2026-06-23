@@ -5,15 +5,20 @@
 {% block content %}
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-4">Manejo Nelore</h1>
     
-        <a href="{% url 'zootecnico_stats' %}" class="btn btn-primary">
-            <i class="fas fa-chart-line me-2"></i> Ver Índices Zootécnicos Detalhados
-        </a>
-    
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h1 class="h2 mb-0 text-dark fw-bold">Manejo Nelore</h1>
+
+        <div class="d-flex gap-2">
+            <a href="{% url 'dashboard_financeiro' %}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                <i class="fas fa-chart-line me-2 text-muted"></i> Financeiro
+            </a>
+            <a href="{% url 'zootecnico_stats' %}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+                <i class="fas fa-database me-2 text-muted"></i> Índices Zootécnicos
+            </a>
+        </div>
     </div>
-    
+
     <p class="lead">Bem-vindo ao centro de controle da sua fazenda. Visão geral do rebanho ativo:</p>
 
 
@@ -220,7 +225,7 @@
                 </div>
                 <div class="mt-2">
                     <span class="text-primary small fw-medium">
-                         Faturamento: R$ {{ faturamento_vendas|floatformat:2 }}
+                         Faturamento: R$ {{ receita_vendas|floatformat:2 }}
                     </span>
                 </div>
             </div>
