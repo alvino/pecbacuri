@@ -7,7 +7,11 @@ from .models import  RegistroDeCusto, CustoAnimalDetalhe, Venda, Despesa, TipoCu
 
 
 @receiver(post_save, sender=Despesa)
-def sync_despesa_to_registro_de_custo(sender, instance, created, **kwargs):
+def sync_despesa_to_registro_de_custo(sender, instance, created,raw=False, **kwargs):
+    
+    if raw:
+        # Evita processar durante a carga inicial de dados (loaddata)
+        return
     
     # Tenta encontrar ou criar o TipoCusto que corresponde à CategoriaDespesa
     tipo_custo_obj, _ = TipoCusto.objects.get_or_create(

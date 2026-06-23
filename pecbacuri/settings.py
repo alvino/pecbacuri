@@ -122,18 +122,20 @@ if IS_IN_PRODUCTION:
         )
     }
 else:
-    # Rodando na sua máquina local, usa o Host Externo para conseguir conectar remoto
-    # DATABASES = {
-    #     'default': dj_database_url.parse(
-    #         'postgresql://dbpecbacuri_user:0p8BFVGhe1CZfjGahmFiVKa2Y40VHGV5@dpg-d8euoqq8qa3s738chi6g-a.oregon-postgres.render.com/dbpecbacuri'
-    #     )
-    # }
+    # Rodando na sua máquina local, usa o Host Externo para conseguir conectar remoto # type: ignore
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+        'default': dj_database_url.parse(
+            'postgresql://dbpecbacuri_user:0p8BFVGhe1CZfjGahmFiVKa2Y40VHGV5@dpg-d8euoqq8qa3s738chi6g-a.oregon-postgres.render.com/dbpecbacuri',
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.sqlite3',
+    #         'NAME': BASE_DIR / 'db.sqlite3',
+    #     }
+    # }
 
 
 # dbBackup
