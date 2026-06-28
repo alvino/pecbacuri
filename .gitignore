@@ -1,12 +1,23 @@
 *.pyc
 
-/db copy.sqlite3
-/db.sqlite3
-ControleRebanho/migrations/0001_initial.py
 .vscode
 /venv
 /.venv
 /staticfiles_root
-backups
 
 dbpecbacuri.md
+
+# Environment variables
+.env
+
+# Backups
+backups/
+
+# SQLite (caso volte a usar)
+db.sqlite3
+
+# Arquivos de cache
+__pycache__/
+*.pyc
+
+dados_fazenda.json

@@ -1,0 +1,8 @@
+-r requirements.txt
+
+# Desenvolvimento
+django-debug-toolbar==5.0.1
+black==25.1.0
+ruff==0.11.0
+pytest==8.3.5
+pytest-django==4.10.0
