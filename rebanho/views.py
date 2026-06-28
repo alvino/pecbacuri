@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.db.models import Avg, F, Q, Count, Sum, Count, Case, When, IntegerField, ExpressionWrapper, FloatField
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Extract
 from datetime import date, timedelta
 from django.utils import timezone
 from decimal import Decimal
@@ -221,8 +221,7 @@ class AnimalDetailView( DetailView):
 
 class AnalisePorIdadeView(TemplateView):
     template_name = 'rebanho/analise_por_idade.html'
-    # Define as categorias de idade em meses
-    # Você pode ajustar estas faixas conforme a sua necessidade zootécnica
+
     IDADE_CATEGORIAS = [
         (12, '0 a 12 Meses (Cria)'),
         (24, '13 a 24 Meses (Recria)'),
@@ -230,109 +229,82 @@ class AnalisePorIdadeView(TemplateView):
         (999, 'Acima de 36 Meses (Matrizes/Reprodutores)'),
     ]
 
-    # Limites para a análise detalhada de bezerros (1 a 9 meses)
-    BEZERRO_LIMITES = list(range(1, 10)) 
-    
+    BEZERRO_LIMITES = list(range(1, 10))
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
-        
-        # 1. CÁLCULO DA IDADE CORRIGIDO
-        # Calcula a diferença de datas (DurationField)
-        duration_expr = today - F('data_nascimento')
-        
-        # Converte a Duration para dias (dividindo pela duração de um dia) e define o resultado como Float
-        idade_em_dias_expr = ExpressionWrapper(
-            duration_expr / timedelta(days=1),
-            output_field=FloatField() # Garante que o resultado é um número (dias)
-        )
-        
-        # Converte dias para meses (dividindo por 30.4 dias/mês)
-        idade_em_meses_expr = ExpressionWrapper(
-            idade_em_dias_expr / 30.4,
-            output_field=IntegerField() # O resultado final que queremos para categorização
-        )
 
-        # Filtra animais vivos com data de nascimento válida
+        # === CÁLCULO DE IDADE CORRIGIDO (compatível com PostgreSQL) ===
         animais_base = Animal.objects.filter(
             situacao='VIVO',
             data_nascimento__isnull=False,
         ).annotate(
-            idade_meses=idade_em_meses_expr # Usa a nova expressão corrigida
+            # Calcula idade em dias de forma segura
+            idade_dias=ExpressionWrapper(
+                today - models.F('data_nascimento'),
+                output_field=models.DurationField()
+            ),
+            # Extrai os dias e converte para meses (float)
+            idade_meses=Extract('idade_dias', 'days') / Decimal('30.4')
         )
-        
-        # --- 2. Análise Detalhada dos Bezerros (0 a 9 meses) ---
+
+        # --- 1. Análise Detalhada dos Bezerros (1 a 9 meses) ---
         analise_bezerros = []
         limite_anterior = 0
 
         for limite_meses in self.BEZERRO_LIMITES:
-            
-            # Filtra os animais na faixa atual (maior que o limite anterior, menor ou igual ao limite atual)
             animais_na_faixa = animais_base.filter(
                 idade_meses__gt=limite_anterior,
                 idade_meses__lte=limite_meses
             )
-            
-            # Conta machos e fêmeas na faixa
+
             contagem_sexo = animais_na_faixa.aggregate(
                 total=Count('id'),
                 machos=Count('id', filter=Q(sexo='M')),
                 femeas=Count('id', filter=Q(sexo='F')),
-                
-                # Idade média em dias (corrigido)
-                idade_media_dias=Avg(
-                    ExpressionWrapper(
-                        F('data_nascimento') - timezone.now().date(),  # invertido
-                        output_field=models.DurationField()
-                    )
-                ),
             )
-            
-            # Cria o nome da categoria
-            nome_categoria = f'{limite_anterior} a {limite_meses} Meses'
-            
+
             analise_bezerros.append({
-                'categoria': nome_categoria,
+                'categoria': f'{limite_anterior + 1} a {limite_meses} Meses',
                 'machos': contagem_sexo['machos'],
                 'femeas': contagem_sexo['femeas'],
                 'total': contagem_sexo['total'],
-                'porcentagem': 0 # Será calculado no template
+                'porcentagem': 0,
             })
-            
-            limite_anterior = limite_meses # O novo limite anterior será o limite atual (9 meses)
 
+            limite_anterior = limite_meses
 
-        # --- 3. Análise Geral (começa após 9 meses) ---
+        # --- 2. Análise Geral (acima de 9 meses) ---
         analise_geral = []
-        limite_anterior = 0 # Continua de onde os bezerros pararam
+        limite_anterior = 9  # continua de onde os bezerros pararam
 
         for limite_meses, nome_categoria in self.IDADE_CATEGORIAS:
-            
             animais_na_faixa = animais_base.filter(
                 idade_meses__gt=limite_anterior,
                 idade_meses__lte=limite_meses
             )
-            
+
             contagem_sexo = animais_na_faixa.aggregate(
-                machos=Count(Case(When(sexo='M', then=1), output_field=IntegerField())),
-                femeas=Count(Case(When(sexo='F', then=1), output_field=IntegerField())),
-                total=Count('id')
+                total=Count('id'),
+                machos=Count('id', filter=Q(sexo='M')),
+                femeas=Count('id', filter=Q(sexo='F')),
             )
-            
+
             analise_geral.append({
                 'categoria': nome_categoria,
                 'machos': contagem_sexo['machos'],
                 'femeas': contagem_sexo['femeas'],
                 'total': contagem_sexo['total'],
-                'porcentagem': 0
+                'porcentagem': 0,
             })
-            
+
             limite_anterior = limite_meses
 
         context['analise_bezerros'] = analise_bezerros
         context['analise_geral'] = analise_geral
-        context['total_geral'] = animais_base.count() # Total de animais na análise
-        
+        context['total_geral'] = animais_base.count()
+
         return context
 
 
