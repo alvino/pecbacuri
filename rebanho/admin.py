@@ -52,9 +52,9 @@ class AnimalAdmin(ImportExportModelAdmin):
 
     actions = [mover_pasto_animais,mudar_lote_animais]
 
-    list_display = ('identificacao', 'data_nascimento', 'idade_ano_mes', 'sexo', 'situacao', 'lote_atual')
+    list_display = ('identificacao', 'data_nascimento', 'sexo', 'situacao', 'lote_atual')
     list_filter = ('situacao', 'sexo', 'lote_atual')
-    search_fields = ('identificacao', 'nome', 'idade_ano_mes',)
+    search_fields = ('identificacao', 'nome',)
 
     # NOVO: Define a ordem e quais campos aparecem no formulário de ADD/EDIT
     fieldsets = (

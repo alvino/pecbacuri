@@ -195,11 +195,14 @@ class Pesagem(models.Model):
         default="Cadastro de peso regular"
     )
 
-    def __str__(self):
-        return f"Pesagem de {self.animal.identificacao} em {self.data_pesagem} ({self.peso_kg} Kg)"
-
     class Meta:
         ordering = ['data_pesagem']
         verbose_name = "Pesagem"
         verbose_name_plural = "Controle de Peso"
 
+    def __str__(self):
+        return f"Pesagem de {self.animal.identificacao} em {self.data_pesagem} ({self.peso_kg} Kg)"
+    
+    def save(self, force_insert = ..., force_update = ..., using = ..., update_fields = ...):
+        self.animal.atualizar_peso_atual(self.peso_kg, self.data_pesagem)
+        return super().save(force_insert, force_update, using, update_fields)

@@ -154,7 +154,7 @@ class CalculadorIndices:
         )['total'] or 0
 
         # 3. Cálculo do Índice R$ / UA / Mês
-        custo_por_ua = float(total_despesas) / total_ua_fazenda
+        custo_por_ua = Decimal(total_despesas) / total_ua_fazenda
 
         # 3. Cálculo de Ganho de Peso (Onde estava o erro)
         # Vamos pegar cada animal que foi pesado no ano e subtrair o menor peso do maior peso
@@ -183,7 +183,14 @@ class CalculadorIndices:
 
         # 6. Produção por UA (Eficiência biológica)
         # Quantas arrobas cada UA produziu no ano
-        arrobas_por_ua = total_arrobas / total_ua_fazenda
+                # === Arrobas por UA ===
+        total_ua_fazenda = Decimal(str(total_ua_fazenda)) if total_ua_fazenda else Decimal('0')
+        total_arrobas = Decimal(str(total_arrobas)) if total_arrobas else Decimal('0')
+
+        if total_ua_fazenda > 0:
+            arrobas_por_ua = total_arrobas / total_ua_fazenda
+        else:
+            arrobas_por_ua = Decimal('0')
 
         return {
             'custo_por_ua': custo_por_ua,

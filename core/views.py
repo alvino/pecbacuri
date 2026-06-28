@@ -56,11 +56,11 @@ class DashboardView(TemplateView):
         for animal in animais_ativos:
             if animal.data_nascimento:
             
-                if animal.total_meses >= meses_desmame_min and animal.total_meses <= meses_desmame_max:
+                if animal.idade_em_meses >= meses_desmame_min and animal.idade_em_meses <= meses_desmame_max:
                     alerta_desmame.append({
                         'pk': animal.pk,
                         'identificacao': animal.identificacao,
-                        'idade_meses': animal.total_meses,
+                        'idade_meses': animal.idade_em_meses,
                         'data_nascimento': animal.data_nascimento
                     })
 

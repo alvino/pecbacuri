@@ -59,8 +59,8 @@ class ZootecnicoService:
         adultos = 0   # > 24 meses
 
         for animal in animais_ativos:
-            # Assumindo que total_meses é uma property ou campo do model Animal
-            meses = animal.total_meses 
+            # Assumindo que idade_em_meses é uma property ou campo do model Animal
+            meses = animal.idade_em_meses 
             if meses <= 12: 
                 bezerros += 1
             elif meses <= 24: 
@@ -76,7 +76,11 @@ class ZootecnicoService:
         total_ua = sum(a.ua_atual for a in animais_ativos) or 1
 
         lotacao_cabecas_ha = (total_vivos / area_float) if area_float > 0 else 0
-        lotacao_ua_ha = (total_ua / area_float) if area_float > 0 else 0
+        from decimal import Decimal
+        if area_float > 0:
+            lotacao_ua_ha = Decimal(total_ua) / Decimal(area_float)
+        else:
+            lotacao_ua_ha = Decimal('0')
 
         return {
             'area_total': area_total_ha,

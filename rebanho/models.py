@@ -51,214 +51,361 @@ class AnimalManager(models.Manager):
         ).order_by('tamanho_id', 'identificacao')
     
 
+from django.db import models
+from django.utils import timezone
+from decimal import Decimal
+from datetime import date, timedelta
+
 class Animal(models.Model):
-    SITUACAO_CHOICES = (
+    SITUACAO_CHOICES = [
         ('VIVO', 'Vivo'),
         ('VENDIDO', 'Vendido'),
         ('MORTO', 'Morto (Baixa)'),
         ('SEMEM', 'Semem'),
-    )
+    ]
 
-    # Identificação e Informações Básicas
-    identificacao = models.CharField(max_length=50, unique=True, verbose_name="Identificação")
-    nome = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nome do Animal")
+    SEXO_CHOICES = [('M', 'Macho'), ('F', 'Fêmea')]
+
+    # === Identificação ===
+    identificacao = models.CharField(
+        max_length=50, 
+        unique=True, 
+        verbose_name="Identificação (Brinco)"
+    )
+    nome = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nome")
+
     data_nascimento = models.DateField(verbose_name="Data de Nascimento")
-    sexo = models.CharField(max_length=1, choices=[('M', 'Macho'), ('F', 'Fêmea')], verbose_name="Sexo")
+    sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, verbose_name="Sexo")
+
     situacao = models.CharField(
         max_length=10, 
         choices=SITUACAO_CHOICES, 
         default='VIVO',
-        verbose_name="Situação do Animal"
+        verbose_name="Situação"
     )
-    
-    # Genealogia (Relações com outros animais)
-    mae = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='filhos', verbose_name="Mãe")
-    pai = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='filhas', verbose_name="Pai")
 
-    # Informações Adicionais
-    observacoes = models.TextField(blank=True, verbose_name="Observações")
-     # NOVO CAMPO: Lote
+    # === Genealogia ===
+    mae = models.ForeignKey(
+        'self', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='filhos',
+        verbose_name="Mãe"
+    )
+    pai = models.ForeignKey(
+        'self', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='filhas',
+        verbose_name="Pai"
+    )
+
+    # === Localização ===
     lote_atual = models.ForeignKey(
         'Lote', 
         on_delete=models.SET_NULL, 
         null=True, 
-        blank=True, 
-        related_name='animais_no_lote',
+        blank=True,
+        related_name='animais',
         verbose_name="Lote Atual"
     )
 
     pasto_atual = models.ForeignKey(
         'infraestrutura.Pasto', 
         on_delete=models.SET_NULL, 
-        null=True, blank=True,
+        null=True, 
+        blank=True,
         related_name='animais_atuais',
         verbose_name="Pasto Atual"
     )
 
-    objects = AnimalManager()  # Usa o gerenciador customizado
-    
-    def __str__(self):
-        return f"{self.identificacao} {self.nome if self.nome else ''}"
+    observacoes = models.TextField(blank=True, verbose_name="Observações")
 
-    @property
-    def total_meses(self):
-        if self.data_nascimento:
-            hoje = date.today()
-            idade_anos = hoje.year - self.data_nascimento.year
-            idade_meses = (hoje.month - self.data_nascimento.month)
-            if hoje.day < self.data_nascimento.day:
-                idade_meses -= 1
-            if idade_meses < 0:
-                idade_anos -= 1
-                idade_meses += 12
+    # === Campos calculados / cache ===
+    peso_atual = models.DecimalField(
+        max_digits=6, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        verbose_name="Peso Atual (kg)"
+    )
+    data_ultima_pesagem = models.DateField(null=True, blank=True)
 
-            total_meses = idade_anos * 12 + idade_meses
-            return total_meses
-        else:
-            return 0
-        
-    @property
-    def idade_ano_mes(self):
-        if self.data_nascimento:
-            hoje = date.today()
-            idade_anos = hoje.year - self.data_nascimento.year
-            idade_meses = hoje.month - self.data_nascimento.month
-            if hoje.day < self.data_nascimento.day:
-                idade_meses -= 1
-            if idade_meses < 0:
-                idade_anos -= 1
-                idade_meses += 12
-           
-            return f"{idade_anos} ano(s) e {idade_meses} mes(es)"
-        else:
-            return 0
-    
-    @property
-    def ua_atual(self):
-        peso_atual = self.obter_ultimo_peso()
-        
-        if peso_atual == 0:
-            if self.total_meses <= 8:
-                return 0.30  # Bezerro(a)
-            elif self.total_meses < 12:
-                return 0.40  # Bezerro(a) próximo do desmame
-            elif self.total_meses < 24:
-                return 0.70  # Novilha/Garrote
-            elif self.sexo == 'F':
-                return 1.00  # Adulto (Vaca)
-            else:
-                return 1.50  # Touro adulto
+    objects = AnimalManager()
 
-        return float(peso_atual) / 450
-
-    def obter_ultimo_peso(self):
-        # Busca a pesagem mais recente deste animal
-        ultima_pesagem = self.historico_pesagens.order_by('-data_pesagem').first()
-        if ultima_pesagem:
-            return ultima_pesagem.peso_kg
-        return 0 # Caso o animal ainda não tenha sido pesado
-    
-    def get_absolute_url(self):
-        """ Retorna a URL para a instância do objeto (AnimalDetailView). """
-        # O 'pk=self.pk' usa a chave primária para construir a URL
-        return reverse('rebanho:animal_detail', kwargs={'pk': self.pk}) 
-        
-        # Se você estivesse usando slug, seria:
-        # return reverse('animal_detail', kwargs={'animal_slug': self.slug})
-        
-    # Em models.py dentro da classe Animal
-    def ganho_medio_diario(self):
-        pesagens = self.pesagens.all().order_by('-data_pesagem')[:2]
-        if pesagens.count() == 2:
-            p_atual = pesagens[0]
-            p_anterior = pesagens[1]
-            diff_peso = p_atual.peso - p_anterior.peso
-            diff_dias = (p_atual.data_pesagem - p_anterior.data_pesagem).days
-            if diff_dias > 0:
-                return diff_peso / diff_dias
-        return 0
-    
-    def calcular_gpmd_animal(self, dias_filtro=None):
-        """Calcula o GPMD (em kg/dia) com base no histórico de pesagens."""
-        pesagens = self.historico_pesagens.all().order_by('data_pesagem')
-        
-        # Filtra por dias se especificado (Ex: últimos 30 dias)
-        if dias_filtro is not None:
-            data_limite = timezone.localdate() - timedelta(days=dias_filtro)
-            pesagens = pesagens.filter(data_pesagem__gte=data_limite)
-
-        if pesagens.count() < 2:
-            return None
-
-        # Simplificando para a média entre a primeira e a última pesagem filtrada
-        primeira = pesagens.first()
-        ultima = pesagens.last()
-
-        peso_total_ganho = ultima.peso_kg - primeira.peso_kg
-        dias = (ultima.data_pesagem - primeira.data_pesagem).days
-        
-        if dias > 0:
-            return peso_total_ganho / Decimal(dias)
-        return None
-
-    @property
-    def ultimo_custo(self):
-        """Retorna a data do último custo alocado."""
-        return self.custoanimaldetalhe_set.all().order_by('-data_custo').values_list('data_custo', flat=True).first()
-
-    @property
-    def ultima_pesagem(self):
-        """Retorna a data da última pesagem."""
-        return self.historico_pesagens.all().order_by('-data_pesagem').values_list('data_pesagem', flat=True).first()
-    
-    # --- NOVO MÉTODO DE LÓGICA DE PARTOS ---
-    def save(self, *args, **kwargs):
-        # Lógica para garantir que o pasto_atual seja atualizado automaticamente
-        if self.pk: # Se o animal já existe
-            ultima_movimentacao = self.movimentacoes_pasto.last()
-            if ultima_movimentacao and ultima_movimentacao.data_saida is None:
-                self.pasto_atual = ultima_movimentacao.pasto_destino
-            elif ultima_movimentacao is None:
-                 self.pasto_atual = None # Limpa se não houver movimentação
-        
-        # Chama o método save original
-        super().save(*args, **kwargs)
-
-        # A lógica só deve rodar se este animal for um recém-nascido (tem mãe)
-        if self.mae and self.data_nascimento:
-            # 1. Busca a Reprodução da Matriz (Mãe) que estava Prenhe (P)
-            #    e ainda não tem bezerro registrado.
-            try:
-                evento_parto = self.mae.reproducoes_matriz.get(
-                    resultado='P',
-                    bezerro__isnull=True
-                )
-                
-                # 2. Se um evento for encontrado:
-                #    A. Vincula este bezerro (self) ao evento de Reprodução
-                evento_parto.bezerro = self
-                
-                #    B. Atualiza a data do DG (opcional, mas bom para rastreio)
-                #       Se a data do DG for nula, vamos definir a data do parto como a data do DG.
-                if evento_parto.data_dg is None:
-                    evento_parto.data_dg = self.data_nascimento
-
-                #    C. Salva o registro de Reprodução atualizado
-                evento_parto.save()
-                
-            except Reproducao.DoesNotExist:
-                # Caso a matriz não tenha um registro 'Prenhe' sem bezerro, 
-                # a lógica segue sem erros.
-                pass
-            except Reproducao.MultipleObjectsReturned:
-                 # Alerta de erro: a matriz está com múltiplos eventos 'Prenhe' abertos.
-                 # No admin, isso pode ser corrigido manualmente.
-                 print(f"ALERTA: Múltiplos eventos 'Prenhe' abertos para a matriz {self.mae.identificacao}")
-
-    
     class Meta:
         verbose_name = "Animal"
         verbose_name_plural = "Animais"
+        ordering = ['identificacao']
+        indexes = [
+            models.Index(fields=['identificacao']),
+            models.Index(fields=['data_nascimento']),
+            models.Index(fields=['situacao']),
+        ]
+
+    def __str__(self):
+        return f"{self.identificacao} - {self.nome or 'Sem nome'}"
+
+    # === Propriedades melhoradas ===
+    @property
+    def idade_em_meses(self):
+        if not self.data_nascimento:
+            return 0
+        hoje = date.today()
+        delta = hoje - self.data_nascimento
+        return (delta.days // 30)  # aproximação boa o suficiente
+
+    @property
+    def idade_formatada(self):
+        meses = self.idade_em_meses
+        anos = meses // 12
+        meses_restante = meses % 12
+        return f"{anos}a {meses_restante}m" if anos else f"{meses}m"
+
+    def atualizar_peso_cache(self, peso, data):
+        """Atualiza cache de peso (chame após criar Pesagem)"""
+        self.peso_atual = peso
+        self.data_ultima_pesagem = data
+        self.save(update_fields=['peso_atual', 'data_ultima_pesagem'])
+
+    def obter_ultimo_peso(self):
+        if self.peso_atual is not None:
+            return self.peso_atual
+        else:
+            return 0
+        
+    @property
+    def ua_atual(self):
+        peso = self.obter_ultimo_peso()
+        
+        if peso == 0 or peso is None:
+            # Cálculo baseado em idade se não tiver peso
+            meses = self.idade_em_meses if hasattr(self, 'idade_em_meses') else self.idade_em_meses
+            if meses <= 8:
+                return Decimal('0.3')
+            elif meses < 12:
+                return Decimal('0.4')
+            elif meses < 24:
+                return Decimal('0.7')
+            elif self.sexo == 'F':
+                return Decimal('1.0')
+            else:
+                return Decimal('1.5')
+        
+        return Decimal(str(peso)) / Decimal('450')
+
+    # class Animal(models.Model):
+    #     SITUACAO_CHOICES = (
+#         ('VIVO', 'Vivo'),
+#         ('VENDIDO', 'Vendido'),
+#         ('MORTO', 'Morto (Baixa)'),
+#         ('SEMEM', 'Semem'),
+#     )
+
+#     SEXO_CHOICES = [('M', 'Macho'), ('F', 'Fêmea')]
+
+#     # Identificação e Informações Básicas
+#     identificacao = models.CharField(max_length=50, unique=True, verbose_name="Identificação (Brinco)")
+#     nome = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nome do Animal")
+#     data_nascimento = models.DateField(verbose_name="Data de Nascimento")
+#     sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, verbose_name="Sexo")
+#     situacao = models.CharField(
+#         max_length=10, 
+#         choices=SITUACAO_CHOICES, 
+#         default='VIVO',
+#         verbose_name="Situação do Animal"
+#     )
+    
+#     # Genealogia (Relações com outros animais)
+#     mae = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='filhos', verbose_name="Mãe")
+#     pai = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='filhas', verbose_name="Pai")
+
+#     # Informações Adicionais
+#     observacoes = models.TextField(blank=True, verbose_name="Observações")
+#      # NOVO CAMPO: Lote
+#     lote_atual = models.ForeignKey(
+#         'Lote', 
+#         on_delete=models.SET_NULL, 
+#         null=True, 
+#         blank=True, 
+#         related_name='animais_no_lote',
+#         verbose_name="Lote Atual"
+#     )
+
+#     pasto_atual = models.ForeignKey(
+#         'infraestrutura.Pasto', 
+#         on_delete=models.SET_NULL, 
+#         null=True, blank=True,
+#         related_name='animais_atuais',
+#         verbose_name="Pasto Atual"
+#     )
+
+#     objects = AnimalManager()  # Usa o gerenciador customizado
+    
+#     def __str__(self):
+#         return f"{self.identificacao} {self.nome if self.nome else ''}"
+
+#     @property
+#     def total_meses(self):
+#         if self.data_nascimento:
+#             hoje = date.today()
+#             idade_anos = hoje.year - self.data_nascimento.year
+#             idade_meses = (hoje.month - self.data_nascimento.month)
+#             if hoje.day < self.data_nascimento.day:
+#                 idade_meses -= 1
+#             if idade_meses < 0:
+#                 idade_anos -= 1
+#                 idade_meses += 12
+
+#             total_meses = idade_anos * 12 + idade_meses
+#             return total_meses
+#         else:
+#             return 0
+        
+#     @property
+#     def idade_ano_mes(self):
+#         if self.data_nascimento:
+#             hoje = date.today()
+#             idade_anos = hoje.year - self.data_nascimento.year
+#             idade_meses = hoje.month - self.data_nascimento.month
+#             if hoje.day < self.data_nascimento.day:
+#                 idade_meses -= 1
+#             if idade_meses < 0:
+#                 idade_anos -= 1
+#                 idade_meses += 12
+           
+#             return f"{idade_anos} ano(s) e {idade_meses} mes(es)"
+#         else:
+#             return 0
+    
+#     @property
+#     def ua_atual(self):
+#         peso_atual = self.obter_ultimo_peso()
+        
+#         if peso_atual == 0:
+#             if self.total_meses <= 8:
+#                 return 0.30  # Bezerro(a)
+#             elif self.total_meses < 12:
+#                 return 0.40  # Bezerro(a) próximo do desmame
+#             elif self.total_meses < 24:
+#                 return 0.70  # Novilha/Garrote
+#             elif self.sexo == 'F':
+#                 return 1.00  # Adulto (Vaca)
+#             else:
+#                 return 1.50  # Touro adulto
+
+#         return float(peso_atual) / 450
+
+#     def obter_ultimo_peso(self):
+#         # Busca a pesagem mais recente deste animal
+#         ultima_pesagem = self.historico_pesagens.order_by('-data_pesagem').first()
+#         if ultima_pesagem:
+#             return ultima_pesagem.peso_kg
+#         return 0 # Caso o animal ainda não tenha sido pesado
+    
+#     def get_absolute_url(self):
+#         """ Retorna a URL para a instância do objeto (AnimalDetailView). """
+#         # O 'pk=self.pk' usa a chave primária para construir a URL
+#         return reverse('rebanho:animal_detail', kwargs={'pk': self.pk}) 
+        
+#         # Se você estivesse usando slug, seria:
+#         # return reverse('animal_detail', kwargs={'animal_slug': self.slug})
+        
+#     # Em models.py dentro da classe Animal
+#     def ganho_medio_diario(self):
+#         pesagens = self.pesagens.all().order_by('-data_pesagem')[:2]
+#         if pesagens.count() == 2:
+#             p_atual = pesagens[0]
+#             p_anterior = pesagens[1]
+#             diff_peso = p_atual.peso - p_anterior.peso
+#             diff_dias = (p_atual.data_pesagem - p_anterior.data_pesagem).days
+#             if diff_dias > 0:
+#                 return diff_peso / diff_dias
+#         return 0
+    
+#     def calcular_gpmd_animal(self, dias_filtro=None):
+#         """Calcula o GPMD (em kg/dia) com base no histórico de pesagens."""
+#         pesagens = self.historico_pesagens.all().order_by('data_pesagem')
+        
+#         # Filtra por dias se especificado (Ex: últimos 30 dias)
+#         if dias_filtro is not None:
+#             data_limite = timezone.localdate() - timedelta(days=dias_filtro)
+#             pesagens = pesagens.filter(data_pesagem__gte=data_limite)
+
+#         if pesagens.count() < 2:
+#             return None
+
+#         # Simplificando para a média entre a primeira e a última pesagem filtrada
+#         primeira = pesagens.first()
+#         ultima = pesagens.last()
+
+#         peso_total_ganho = ultima.peso_kg - primeira.peso_kg
+#         dias = (ultima.data_pesagem - primeira.data_pesagem).days
+        
+#         if dias > 0:
+#             return peso_total_ganho / Decimal(dias)
+#         return None
+
+#     @property
+#     def ultimo_custo(self):
+#         """Retorna a data do último custo alocado."""
+#         return self.custoanimaldetalhe_set.all().order_by('-data_custo').values_list('data_custo', flat=True).first()
+
+#     @property
+#     def ultima_pesagem(self):
+#         """Retorna a data da última pesagem."""
+#         return self.historico_pesagens.all().order_by('-data_pesagem').values_list('data_pesagem', flat=True).first()
+    
+#     # --- NOVO MÉTODO DE LÓGICA DE PARTOS ---
+#     def save(self, *args, **kwargs):
+#         # Lógica para garantir que o pasto_atual seja atualizado automaticamente
+#         if self.pk: # Se o animal já existe
+#             ultima_movimentacao = self.movimentacoes_pasto.last()
+#             if ultima_movimentacao and ultima_movimentacao.data_saida is None:
+#                 self.pasto_atual = ultima_movimentacao.pasto_destino
+#             elif ultima_movimentacao is None:
+#                  self.pasto_atual = None # Limpa se não houver movimentação
+        
+#         # Chama o método save original
+#         super().save(*args, **kwargs)
+
+#         # A lógica só deve rodar se este animal for um recém-nascido (tem mãe)
+#         if self.mae and self.data_nascimento:
+#             # 1. Busca a Reprodução da Matriz (Mãe) que estava Prenhe (P)
+#             #    e ainda não tem bezerro registrado.
+#             try:
+#                 evento_parto = self.mae.reproducoes_matriz.get(
+#                     resultado='P',
+#                     bezerro__isnull=True
+#                 )
+                
+#                 # 2. Se um evento for encontrado:
+#                 #    A. Vincula este bezerro (self) ao evento de Reprodução
+#                 evento_parto.bezerro = self
+                
+#                 #    B. Atualiza a data do DG (opcional, mas bom para rastreio)
+#                 #       Se a data do DG for nula, vamos definir a data do parto como a data do DG.
+#                 if evento_parto.data_dg is None:
+#                     evento_parto.data_dg = self.data_nascimento
+
+#                 #    C. Salva o registro de Reprodução atualizado
+#                 evento_parto.save()
+                
+#             except Reproducao.DoesNotExist:
+#                 # Caso a matriz não tenha um registro 'Prenhe' sem bezerro, 
+#                 # a lógica segue sem erros.
+#                 pass
+#             except Reproducao.MultipleObjectsReturned:
+#                  # Alerta de erro: a matriz está com múltiplos eventos 'Prenhe' abertos.
+#                  # No admin, isso pode ser corrigido manualmente.
+#                  print(f"ALERTA: Múltiplos eventos 'Prenhe' abertos para a matriz {self.mae.identificacao}")
+
+    
+#     class Meta:
+#         verbose_name = "Animal"
+#         verbose_name_plural = "Animais"
 
 
 class BaixaAnimal(models.Model):
