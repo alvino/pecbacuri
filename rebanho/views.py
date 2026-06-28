@@ -6,6 +6,7 @@ from django.contrib import messages, auth
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, FormView
 from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import models
 from django.db.models import Avg, F, Q, Count, Sum, Count, Case, When, IntegerField, ExpressionWrapper, FloatField
 from django.db.models.functions import Coalesce
 from datetime import date, timedelta
@@ -274,9 +275,17 @@ class AnalisePorIdadeView(TemplateView):
             
             # Conta machos e fêmeas na faixa
             contagem_sexo = animais_na_faixa.aggregate(
-                machos=Count(Case(When(sexo='M', then=1), output_field=IntegerField())),
-                femeas=Count(Case(When(sexo='F', then=1), output_field=IntegerField())),
-                total=Count('id')
+                total=Count('id'),
+                machos=Count('id', filter=Q(sexo='M')),
+                femeas=Count('id', filter=Q(sexo='F')),
+                
+                # Idade média em dias (corrigido)
+                idade_media_dias=Avg(
+                    ExpressionWrapper(
+                        F('data_nascimento') - timezone.now().date(),  # invertido
+                        output_field=models.DurationField()
+                    )
+                ),
             )
             
             # Cria o nome da categoria
