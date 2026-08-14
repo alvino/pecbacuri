@@ -1,9 +1,11 @@
 # ControleRebanho/views.py
 
+import csv
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
-from django.views.generic import ListView, UpdateView, FormView
+from django.views.generic import ListView, UpdateView, FormView, TemplateView, View
 from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Avg, Sum
@@ -12,6 +14,7 @@ from datetime import  timedelta
 from django.utils import timezone
 from decimal import Decimal
 
+from core.services import ZootecnicoService
 from financeiro.models import CustoAnimalDetalhe
 from rebanho.models import Animal
 
@@ -20,6 +23,9 @@ from .models import  TratamentoSaude, Reproducao, Pesagem,  TarefaManejo
 from .forms import  ReproducaoSelectMultipleMatrizForm, TratamentoForm, ReproducaoForm,  PesagemForm, PesagemForm,  PesagemModelForm
 from .filters import PesagemFilter, ReproducaoFilter
 
+from django.db import transaction
+
+from .forms import RegistrarNascimentoForm
 # --------------------------------
 # CreateViews do projeto de Pecuária
 # --------------------------------
@@ -431,3 +437,94 @@ def alertas_de_manejo(request):
     
     return render(request, 'manejo/alertas_de_manejo.html', context)
 
+
+class ParicoesListView(LoginRequiredMixin, TemplateView):
+    template_name = 'manejo/paricoes_list.html'
+   
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Controle de Parições Previstas'
+        context.update(ZootecnicoService.obter_indicadores_performance())
+        context['alertas_paricao'] = ZootecnicoService.obter_alertas_paricao()
+        return context
+
+
+class ExportarParicoesCSVView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        # 1. Configura os headers HTTP para o download do arquivo CSV
+        data_hoje = timezone.localdate().strftime('%Y-%m-%d')
+        filename = f"alertas_paricao_{data_hoje}.csv"
+        
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        # 2. Inicializa o gravador CSV
+        writer = csv.writer(response, delimiter=';')
+        
+        # Cabeçalho do arquivo CSV
+        writer.writerow(['Matriz', 'Data Prevista (DPP)', 'Dias Restantes', 'Status'])
+
+        # 3. Busca os dados usando o seu ZootecnicoService
+        alertas = ZootecnicoService.obter_alertas_paricao()
+
+        # 4. Escreve as linhas
+        for alerta in alertas:
+            dias = alerta.get('dias_restantes', 0)
+            status = 'IMINENTE' if dias <= 7 else 'Normal'
+            dpp = alerta['dpp'].strftime('%d/%m/%Y') if alerta.get('dpp') else ''
+
+            writer.writerow([
+                alerta.get('matriz', ''),
+                dpp,
+                dias,
+                status
+            ])
+
+        return response
+
+
+class RegistrarNascimentoView(LoginRequiredMixin, FormView):
+    template_name = 'manejo/registrar_nascimento.html'
+    form_class = RegistrarNascimentoForm
+    success_url = reverse_lazy('manejo:paricoes_list')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Se você passar o id da gestação na URL (ex: ?reproducao_id=5), preenche automaticamente
+        reproducao_id = self.request.GET.get('reproducao_id')
+        if reproducao_id:
+            initial['reproducao'] = reproducao_id
+        return initial
+
+    def form_valid(self, form):
+        reproducao = form.cleaned_data['reproducao']
+        identificacao = form.cleaned_data['identificacao_bezerro']
+        sexo = form.cleaned_data['sexo']
+        data_nascimento = form.cleaned_data['data_nascimento']
+        peso = form.cleaned_data['peso_nascimento']
+
+        try:
+            with transaction.atomic():
+                # 1. Cria o Bezerro vinculando à Mãe, Pai e Pasto da Matriz
+                bezerro = Animal.objects.create(
+                    identificacao=identificacao,
+                    sexo=sexo,
+                    data_nascimento=data_nascimento,
+                    mae=reproducao.matriz,
+                    pasto=reproducao.matriz.pasto,          # Mantém no mesmo pasto da mãe
+                    peso_atual=peso,                   # Ajuste para suas opções de categoria
+                )
+
+                # 2. Atualiza a ficha reprodutiva da Matriz
+                reproducao.status = 'PARIDA'                # Ajuste conforme as opções de status do seu model
+                reproducao.data_parto_real = data_nascimento
+                if hasattr(reproducao, 'bezerro'):
+                    reproducao.bezerro = bezerro
+                reproducao.save()
+
+            messages.success(self.request, f"Bezerro {bezerro.identificacao} cadastrado e parto registrado com sucesso!")
+            return super().form_valid(form)
+
+        except Exception as e:
+            messages.error(self.request, f"Erro ao registrar nascimento: {str(e)}")
+            return self.form_invalid(form)

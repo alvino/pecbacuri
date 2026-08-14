@@ -116,17 +116,17 @@ class Reproducao(models.Model):
 
     def __str__(self):
         return f"Reprodução de {self.matriz.identificacao} em {self.data_cio}"
+
+    
     
     def save(self, *args, **kwargs):
-        # 1. Calcula a data prevista do parto (285 dias)
-        if self.data_dg:
-            # Se houver DG, calcula a partir da DG (mais preciso)
-            self.data_parto_prevista = self.data_dg + timedelta(days=285)
-        elif self.data_cio:
-            # Se não houver DG, calcula a partir da Cobertura (menos preciso)
+       # 285 dias a partir do cio/inseminação
+        if self.data_cio:
             self.data_parto_prevista = self.data_cio + timedelta(days=285)
+        else:
+            self.data_parto_prevista = None
             
-        super().save(*args, **kwargs)
+        super().save(*args, **kwargs)         
 
     def dias_para_parir(self):
         """ Retorna quantos dias faltam para a parição. """

@@ -8,15 +8,19 @@ from django.contrib.auth.decorators import login_required # Importe o decorador
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.db.models import Avg, F, Q, Count, Sum, Count, Case, When, IntegerField, ExpressionWrapper, FloatField
-from django.db.models.functions import Coalesce, Extract
+from django.db.models.functions import Coalesce, Extract, ExtractDay
 from datetime import date, timedelta
 from django.utils import timezone
 from decimal import Decimal
+
+from datetime import timedelta
 
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from core.services import ZootecnicoService
 
 from .serializers import AnimalSerializer 
 from .filters import AnimalFilter
@@ -218,46 +222,51 @@ class AnimalDetailView( DetailView):
         }
 
 
-
 class AnalisePorIdadeView(TemplateView):
     template_name = 'rebanho/analise_por_idade.html'
 
     IDADE_CATEGORIAS = [
-        (12, '0 a 12 Meses (Cria)'),
+        (12, '10 a 12 Meses (Cria)'),
         (24, '13 a 24 Meses (Recria)'),
         (36, '25 a 36 Meses (Recria Avançada)'),
         (999, 'Acima de 36 Meses (Matrizes/Reprodutores)'),
     ]
 
-    BEZERRO_LIMITES = list(range(1, 10))
+    BEZERRO_LIMITES = list(range(1, 10))  # 1 a 9 meses
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
 
-        # === CÁLCULO DE IDADE CORRIGIDO (compatível com PostgreSQL) ===
+        # Base de animais vivos com data de nascimento cadastrada
         animais_base = Animal.objects.filter(
             situacao='VIVO',
             data_nascimento__isnull=False,
-        ).annotate(
-            # Calcula idade em dias de forma segura
-            idade_dias=ExpressionWrapper(
-                today - models.F('data_nascimento'),
-                output_field=models.DurationField()
-            ),
-            # Extrai os dias e converte para meses (float)
-            idade_meses=Extract('idade_dias', 'days') / Decimal('30.4')
         )
+
+        total_geral = animais_base.count()
+
+        # Função auxiliar para filtrar por faixa de meses usando timedelta
+        def get_animais_na_faixa(mes_min, mes_max):
+            # Ex: Para faixa de 0 a 1 mês:
+            # data_inicio (mais antigo da faixa) = hoje - 30.4 dias
+            # data_fim (mais novo da faixa) = hoje
+            data_fim = today - timedelta(days=int(mes_min * 30.4)) if mes_min > 0 else today
+            
+            qs = animais_base.filter(data_nascimento__lte=data_fim)
+            
+            if mes_max < 999:
+                data_inicio = today - timedelta(days=int(mes_max * 30.4))
+                qs = qs.filter(data_nascimento__gt=data_inicio)
+                
+            return qs
 
         # --- 1. Análise Detalhada dos Bezerros (1 a 9 meses) ---
         analise_bezerros = []
         limite_anterior = 0
 
         for limite_meses in self.BEZERRO_LIMITES:
-            animais_na_faixa = animais_base.filter(
-                idade_meses__gt=limite_anterior,
-                idade_meses__lte=limite_meses
-            )
+            animais_na_faixa = get_animais_na_faixa(limite_anterior, limite_meses)
 
             contagem_sexo = animais_na_faixa.aggregate(
                 total=Count('id'),
@@ -265,12 +274,15 @@ class AnalisePorIdadeView(TemplateView):
                 femeas=Count('id', filter=Q(sexo='F')),
             )
 
+            total_faixa = contagem_sexo['total'] or 0
+            porcentagem = (total_faixa / total_geral * 100) if total_geral > 0 else 0
+
             analise_bezerros.append({
-                'categoria': f'{limite_anterior + 1} a {limite_meses} Meses',
-                'machos': contagem_sexo['machos'],
-                'femeas': contagem_sexo['femeas'],
-                'total': contagem_sexo['total'],
-                'porcentagem': 0,
+                'categoria': f'{limite_anterior} a {limite_meses} Meses' if limite_anterior > 0 else '0 a 1 Meses',
+                'machos': contagem_sexo['machos'] or 0,
+                'femeas': contagem_sexo['femeas'] or 0,
+                'total': total_faixa,
+                'porcentagem': round(porcentagem, 1),
             })
 
             limite_anterior = limite_meses
@@ -280,10 +292,7 @@ class AnalisePorIdadeView(TemplateView):
         limite_anterior = 9  # continua de onde os bezerros pararam
 
         for limite_meses, nome_categoria in self.IDADE_CATEGORIAS:
-            animais_na_faixa = animais_base.filter(
-                idade_meses__gt=limite_anterior,
-                idade_meses__lte=limite_meses
-            )
+            animais_na_faixa = get_animais_na_faixa(limite_anterior, limite_meses)
 
             contagem_sexo = animais_na_faixa.aggregate(
                 total=Count('id'),
@@ -291,22 +300,25 @@ class AnalisePorIdadeView(TemplateView):
                 femeas=Count('id', filter=Q(sexo='F')),
             )
 
+            total_faixa = contagem_sexo['total'] or 0
+            porcentagem = (total_faixa / total_geral * 100) if total_geral > 0 else 0
+
             analise_geral.append({
                 'categoria': nome_categoria,
-                'machos': contagem_sexo['machos'],
-                'femeas': contagem_sexo['femeas'],
-                'total': contagem_sexo['total'],
-                'porcentagem': 0,
+                'machos': contagem_sexo['machos'] or 0,
+                'femeas': contagem_sexo['femeas'] or 0,
+                'total': total_faixa,
+                'porcentagem': round(porcentagem, 1),
             })
 
             limite_anterior = limite_meses
 
         context['analise_bezerros'] = analise_bezerros
         context['analise_geral'] = analise_geral
-        context['total_geral'] = animais_base.count()
+        context['total_geral'] = total_geral
 
         return context
-
+    
 
 class AnaliseDesempenhoLotesCBV(TemplateView):
     template_name = 'rebanho/analise_lotes.html'
@@ -421,3 +433,14 @@ class BaixaAnimalCreateView(LoginRequiredMixin, FormView):
 
         messages.success(self.request, f'Animal {animal.identificacao} baixado com sucesso.')
         return super().form_valid(form)
+
+
+
+class DesmameListView(LoginRequiredMixin, TemplateView):
+    template_name = 'rebanho/desmame_list.html'
+   
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Controle de Desmames'
+        context['alertas_desmame'] = ZootecnicoService.obter_alertas_desmame()
+        return context

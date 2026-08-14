@@ -182,7 +182,7 @@ class VendaCreateView(LoginRequiredMixin,FormView):
         data_entrada = form.cleaned_data['data_entrada']
         peso_venda = form.cleaned_data['peso_venda']
         valor_total = form.cleaned_data['valor_total']
-        comprador = form.cleaned_data['comprador']
+        origem_pagador = form.cleaned_data['origem_pagador']
         observacoes = form.cleaned_data['observacoes']
         animais = form.cleaned_data['animais']
         
@@ -193,7 +193,7 @@ class VendaCreateView(LoginRequiredMixin,FormView):
                 data_entrada=data_entrada,
                 peso_venda=peso_venda,
                 valor_total=valor_total,
-                comprador=comprador,
+                origem_pagador=origem_pagador,
                 observacoes=observacoes
             )
             animal.situacao = 'VENDIDO'

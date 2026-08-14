@@ -37,98 +37,33 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        ano_atual = timezone.localdate().year
 
-        # 1. Total de Animais
-        total_animais = Animal.objects.filter(situacao='VIVO').count()
-        
-        # 2. Divisão por Sexo
-        total_machos = Animal.objects.filter(situacao='VIVO', sexo='M').count()
-        total_femeas = Animal.objects.filter(situacao='VIVO', sexo='F').count()
-        
-        alerta_genealogia = Animal.objects.filter(situacao='VIVO', mae__isnull=True).count()
+        # 1. Indicadores Zootécnicos e Alertas
+        context.update(ZootecnicoService.obter_indicadores_performance())
+        context['alerta_desmame'] = ZootecnicoService.obter_alertas_desmame()
+        context['alertas_paricao'] = ZootecnicoService.obter_alertas_paricao()
 
-        animais_ativos = Animal.objects.filter(situacao='VIVO')
-        
-        alerta_desmame = []
-        meses_desmame_min = 6
-        meses_desmame_max = 8
-        
-        for animal in animais_ativos:
-            if animal.data_nascimento:
-            
-                if animal.idade_em_meses >= meses_desmame_min and animal.idade_em_meses <= meses_desmame_max:
-                    alerta_desmame.append({
-                        'pk': animal.pk,
-                        'identificacao': animal.identificacao,
-                        'idade_meses': animal.idade_em_meses,
-                        'data_nascimento': animal.data_nascimento
-                    })
-
-        today = date.today()
-        # Define a janela de alerta: da data atual até 30 dias no futuro
-        data_limite = today + timedelta(days=30)
-        
-        # Filtra registros de reprodução onde:
-        # 1. A parição ainda não ocorreu (gestacao_terminada=False, se você tiver esse campo, senão o próximo filtro garante isso)
-        # 2. A Data Prevista do Parto (DPP) está no futuro, mas antes da data limite (+30 dias)
-        
-        alertas_paricao = Reproducao.objects.filter(
-            data_parto_prevista__gte=today,          # DPP é hoje ou no futuro
-            data_parto_prevista__lte=data_limite     # DPP é nos próximos 30 dias
-        ).select_related('matriz') # Otimiza a busca pelo animal
-
-        # Prepara a lista final para o template
-        lista_alertas = []
-        for reprod in alertas_paricao:
-            dias_restantes = reprod.dias_para_parir()
-            
-            lista_alertas.append({
-                'matriz': reprod.animal.identificacao, # ou outro campo de identificação
-                'dpp': reprod.data_parto_prevista,
-                'dias_restantes': dias_restantes,
-                'link_animal': reprod.animal.get_absolute_url() if hasattr(reprod.animal, 'get_absolute_url') else '#',
-            })
-            
-        context['alertas_paricao'] = lista_alertas
-
-
-
-        hoje = timezone.localdate()
-        ano_atual = hoje.year
-        # 3. Dados para o Gráfico de Status Reprodutivo
-        # Contagem de resultados de DG (Diagnóstico de Gestação) mais recentes:
-        
-        
-        # 4. Dados para o Gráfico de Distribuição do Rebanho
-        total_vendido = Venda.objects.filter(
-            animal__situacao='VENDIDO',
-            data_entrada__year=ano_atual
-            ).count()
-        total_baixa = BaixaAnimal.objects.filter(
-            animal__situacao='MORTO',
-            data_baixa__year=ano_atual
-            ).count()
-        
-        indices_reproducao = ReproducaoService.obter_dados_estacao(ano_atual-1)
-        indices_financeiro = CalculadorIndices.obter_estatisticas_financeiras(ano_atual)
-        context.update(indices_reproducao)
-        context.update(indices_financeiro)
-
+        # 2. Contagens Rápidas do Rebanho
+        animais_vivos = Animal.objects.filter(situacao='VIVO')
         context.update({
-            'total_animais': total_animais,
-            'total_machos': total_machos,
-            'total_femeas': total_femeas,
-            'alerta_genealogia': alerta_genealogia,
-            'alerta_desmame': alerta_desmame,
-            
-            # Dados do Gráfico de Distribuição
-            'total_vendido': total_vendido,
-            'total_baixa': total_baixa,
+            'total_animais': animais_vivos.count(),
+            'total_machos': animais_vivos.filter(sexo='M').count(),
+            'total_femeas': animais_vivos.filter(sexo='F').count(),
+            'alerta_genealogia': animais_vivos.filter(mae__isnull=True).count(),
         })
-        
+
+        # 3. Dados de Distribuição do Ano
+        context.update({
+            'total_vendido': Venda.objects.filter(animal__situacao='VENDIDO', data_entrada__year=ano_atual).count(),
+            'total_baixa': BaixaAnimal.objects.filter(animal__situacao='MORTO', data_baixa__year=ano_atual).count(),
+        })
+
+        # 4. Indicadores Financeiros e Reprodutivos
+        context.update(ReproducaoService.obter_dados_estacao(ano_atual - 1))
+        context.update(CalculadorIndices.obter_estatisticas_financeiras(ano_atual))
+
         return context
-
-
 
 
 @login_required(login_url='login')

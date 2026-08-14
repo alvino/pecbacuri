@@ -31,13 +31,14 @@ class CategoriaDespesaForm(forms.ModelForm):
 
 class VendaForm(forms.Form):
     
-    data_venda = forms.DateField(
+    data_entrada = forms.DateField(
         widget=forms.DateInput(
             format='%Y-%m-%d',
             attrs={'type': 'date', 'class': 'form-control'}
         ),
         initial=timezone.localdate()
     )
+
     peso_venda = forms.DecimalField(
         max_digits=10, decimal_places=2,
         widget=forms.NumberInput(
@@ -50,7 +51,7 @@ class VendaForm(forms.Form):
             attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'R$'}
         )
     )   
-    comprador = forms.CharField(
+    origem_pagador = forms.CharField(
         max_length=255,
         widget=forms.TextInput(
             attrs={'class': 'form-control', 'placeholder': 'Nome do comprador ou frigorífico'}

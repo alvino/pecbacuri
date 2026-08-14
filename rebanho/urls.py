@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import  AnaliseDesempenhoLotesCBV, AnimalViewSet, AnalisePorIdadeView,  AnimalCreateView, AnimalUpdateView,  AnimalListView, AnimalDetailView, BaixaAnimalCreateView
+from .views import  AnaliseDesempenhoLotesCBV, AnimalViewSet, AnalisePorIdadeView,  AnimalCreateView, AnimalUpdateView,  AnimalListView, AnimalDetailView, BaixaAnimalCreateView, DesmameListView
 from infraestrutura.views import MovimentacaoPastoCreateView
 from rest_framework.routers import DefaultRouter
 
@@ -22,6 +22,7 @@ urlpatterns = [
     path('analise_lotes/', AnaliseDesempenhoLotesCBV.as_view(), name='analise_lotes'),
     path('baixa_animal/', BaixaAnimalCreateView.as_view(), name='baixa_animal_create'),
 
+    path('desmame/', DesmameListView.as_view(), name='desmame_list'),
     # Rotas da API (JSON)
     # Tudo em http://127.0.0.1:8000/api/v1/
     path('api/v1/', include(router.urls)),

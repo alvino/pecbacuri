@@ -7,9 +7,56 @@ from infraestrutura.models import Pasto
 from manejo.models import Reproducao
 from manejo.services import ReproducaoService
 from rebanho.models import Animal, BaixaAnimal
-    
+from datetime import date
 
 class ZootecnicoService:
+    @staticmethod
+    def obter_alertas_desmame(meses_min=6, meses_max=8):
+        """Retorna animais em idade de desmame calculando via banco/datas."""
+        today = date.today()
+        # Calcula as datas limite em dias (30.4 dias/mês)
+        data_min = today - timedelta(days=int(meses_max * 30.4))
+        data_max = today - timedelta(days=int(meses_min * 30.4))
+
+        animais = Animal.objects.filter(
+            situacao='VIVO',
+            data_nascimento__range=(data_min, data_max)
+        )
+
+        return [
+            {
+                'pk': animal.pk,
+                'identificacao': animal.identificacao,
+                'idade_meses': animal.idade_em_meses,
+                'data_nascimento': animal.data_nascimento
+            }
+            for animal in animais
+        ]
+
+    @staticmethod
+    def obter_alertas_paricao(dias_ahead=30):
+        """Retorna matrizes com previsão de parto nos próximos N dias."""
+        today = date.today()
+        data_limite = today + timedelta(days=dias_ahead)
+
+        alertas_paricao = Reproducao.objects.filter(
+            bezerro__isnull=True,
+            data_parto_prevista__gte=today,
+            data_parto_prevista__lte=data_limite
+        ).select_related('matriz').order_by('data_parto_prevista')
+
+        return [
+            {
+                # Troque reprod.animal por reprod.matriz:
+                'pk': reprod.pk,
+                'matriz': reprod.matriz.identificacao if reprod.matriz else "N/A",
+                'dpp': reprod.data_parto_prevista,
+                'dias_restantes': reprod.dias_para_parir(),
+                'link_animal': reprod.matriz.get_absolute_url() if reprod.matriz and hasattr(reprod.matriz, 'get_absolute_url') else '#',
+            }
+            for reprod in alertas_paricao
+        ]
+
     @staticmethod
     def obter_indicadores_performance():
         hoje = timezone.localdate()

@@ -6,7 +6,12 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Análise Zootécnica <small class="text-muted">| {{ ano_atual|unlocalize }}</small></h1>
-        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Voltar ao Dashboard</a>
+        
+        <div class="d-flex gap-2">
+        <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+            <i class="fas fa-tachometer-alt me-2 text-muted"></i> Painel Geral
+        </a>
+    </div>
     </div>
 
     <div class="row mb-2">

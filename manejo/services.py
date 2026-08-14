@@ -1,7 +1,13 @@
 from django.db.models import Q
+from django.db import transaction
+from django.utils import timezone
+
 from .models import Reproducao
+from rebanho.models import Animal
+
 
 class ReproducaoService:
+
     @staticmethod
     def obter_dados_estacao(ano_inicio):
         """

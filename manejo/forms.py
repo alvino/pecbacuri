@@ -9,6 +9,36 @@ from rebanho.models import Animal
 from .models import  TratamentoSaude, Reproducao, Pesagem
 
 
+class RegistrarNascimentoForm(forms.Form):
+    reproducao = forms.ModelChoiceField(
+        queryset=Reproducao.objects.filter(resultado='P'), # Ajuste o status conforme seu model
+        label="Matriz (Gestação)",
+        widget=forms.Select(attrs={'class': 'form-select select2'})
+    )
+    identificacao_bezerro = forms.CharField(
+        label="Brinco / Identificação do Bezerro",
+        max_length=50,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: B-2026-01'})
+    )
+    sexo = forms.ChoiceField(
+        choices=[('M', 'Macho'), ('F', 'Fêmea')],
+        label="Sexo",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    data_nascimento = forms.DateField(
+        label="Data do Parto",
+        widget=forms.DateInput(format='%Y-%m-%d',attrs={'class': 'form-control', 'type': 'date'})
+    )
+    peso_nascimento = forms.DecimalField(
+        label="Peso ao Nascer (kg)",
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        initial=30.2,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 32.50'})
+    )
+
+
 
 class PesagemForm(forms.Form):
     data_pesagem = forms.DateField(

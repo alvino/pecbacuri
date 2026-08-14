@@ -59,7 +59,7 @@ class PesagemAdmin(admin.ModelAdmin):
 class ReproducaoAdmin(ImportExportModelAdmin):
     resource_class = ReproducaoResource   
 
-    list_display = ('matriz', 'data_cio', 'tipo', 'resultado', 'data_parto_prevista')
+    list_display = ('matriz', 'data_cio', 'tipo', 'touro', 'resultado', 'data_parto_prevista')
     list_filter = ('tipo', 'resultado')
     search_fields = ('matriz__identificacao', 'touro__identificacao', 'codigo_semen')
 

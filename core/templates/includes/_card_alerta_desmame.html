@@ -1,0 +1,25 @@
+<div class="card {% if alerta_desmame %}border-warning{% else %}border-0 shadow-sm{% endif %} my-3">
+    
+    <!-- Cabeçalho do Card -->
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2 {% if alerta_desmame %}bg-warning text-dark{% else %}bg-secondary text-white{% endif %} py-2 px-3">
+        <h6 class="mb-0 fw-bold d-flex align-items-center">
+            <i class="fas fa-cut me-2 fs-5"></i>
+            <span>Alerta de Desmame</span>
+        </h6>
+
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge {% if alerta_desmame %}bg-dark text-white{% else %}bg-light text-dark{% endif %} rounded-pill px-3 py-2">
+                <i class="fas fa-baby me-1"></i>
+                <strong>{{ alerta_desmame|length }}</strong> 
+                <span class="d-none d-sm-inline">Bezerros</span>
+            </span>
+
+            {% if alerta_desmame %}
+            <a href="{% url 'desmame_list' %}" class="btn btn-sm btn-dark fw-bold text-nowrap d-flex align-items-center">
+                <span>Ver Todos</span>
+                <i class="fas fa-arrow-right ms-1 small"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
